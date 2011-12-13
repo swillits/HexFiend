@@ -205,26 +205,24 @@ static inline Class preferredByteArrayClass(void) {
 
 /* Code to save to user defs (NO) or apply from user defs (YES) the default representers to show. */
 - (void)saveOrApplyDefaultRepresentersToDisplay:(BOOL)isApplying {
-    const struct {
-        NSString *name;
-        HFRepresenter *rep;
-    } shownRepresentersData[] = {
-        {USERDEFS_KEY_FOR_REP(lineCountingRepresenter), lineCountingRepresenter},
-        {USERDEFS_KEY_FOR_REP(hexRepresenter), hexRepresenter},
-        {USERDEFS_KEY_FOR_REP(asciiRepresenter), asciiRepresenter},
-        {USERDEFS_KEY_FOR_REP(dataInspectorRepresenter), dataInspectorRepresenter},
-        {USERDEFS_KEY_FOR_REP(statusBarRepresenter), statusBarRepresenter},
-        {USERDEFS_KEY_FOR_REP(scrollRepresenter), scrollRepresenter}
+    const id shownRepresentersData[] = {
+        USERDEFS_KEY_FOR_REP(lineCountingRepresenter), lineCountingRepresenter,
+        USERDEFS_KEY_FOR_REP(hexRepresenter), hexRepresenter,
+        USERDEFS_KEY_FOR_REP(asciiRepresenter), asciiRepresenter,
+        USERDEFS_KEY_FOR_REP(dataInspectorRepresenter), dataInspectorRepresenter,
+        USERDEFS_KEY_FOR_REP(statusBarRepresenter), statusBarRepresenter,
+        USERDEFS_KEY_FOR_REP(scrollRepresenter), scrollRepresenter
     };
     NSUInteger i;
     NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
-    for (i=0; i < sizeof shownRepresentersData / sizeof *shownRepresentersData; i++) {
+    for (i=0; i < sizeof shownRepresentersData / sizeof *shownRepresentersData; ) {
+        NSString *name = shownRepresentersData[i++];
+        HFRepresenter *rep = shownRepresentersData[i++];
         if (isApplying) {
             /* Read from user defaults */
-            NSNumber *boolObject = [defs objectForKey:shownRepresentersData[i].name];
+            NSNumber *boolObject = [defs objectForKey:name];
             if (boolObject != nil) {
                 BOOL shouldShow = [boolObject boolValue];
-                HFRepresenter *rep = shownRepresentersData[i].rep;
                 if (shouldShow != [self representerIsShown:rep]) {
                     if (shouldShow) [self showViewForRepresenter:rep];
                     else [self hideViewForRepresenter:rep];
@@ -233,8 +231,8 @@ static inline Class preferredByteArrayClass(void) {
         }
         else {
             /* Save to user defaults */
-            BOOL isShown = [self representerIsShown:shownRepresentersData[i].rep];
-            [defs setBool:isShown forKey:shownRepresentersData[i].name];
+            BOOL isShown = [self representerIsShown:rep];
+            [defs setBool:isShown forKey:name];
         }
     }
     if (isApplying) {
@@ -981,7 +979,6 @@ static inline Class preferredByteArrayClass(void) {
         
         /* Autorelease now that we're in the main thread */
         if (outError) *outError = error;
-        [error autorelease];
         
         /* Post an event so our event loop wakes up */
         [NSApp postEvent:[NSEvent otherEventWithType:NSApplicationDefined location:NSZeroPoint modifierFlags:0 timestamp:0 windowNumber:0 context:NULL subtype:0 data1:0 data2:0] atStart:NO];
