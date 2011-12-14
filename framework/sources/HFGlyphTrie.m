@@ -32,14 +32,15 @@ static void insertTrie(void *node, uint8_t branchingDepth, NSUInteger key, struc
         /* Branch */
         struct HFGlyphTrieBranch_t *branch = node;
         NSUInteger keySlice = key & ((1 << kHFGlyphTrieBranchFactor) - 1), keyRemainder = key >> kHFGlyphTrieBranchFactor;
-        __strong void *child = branch->children[keySlice];
+        void *child = branch->children[keySlice];
         if (child == NULL) {
-            /* We have to allocate the child, ad it should be zero-filled.  Allocate a leaf if our depth is 2, a branch otherwise.  Note that NSAllocateCollectable only clears scanned memory: we have to clear unscanned memory ourselves. */
+            /* We have to allocate the child, and it should be zero-filled.  Allocate a leaf if our depth is 2, a branch otherwise. */
             if (branchingDepth == 2) {
-                child = NSAllocateCollectable(sizeof(struct HFGlyphTrieLeaf_t), 0); //collectable but not scanned, since it contains no pointers
-                bzero(child, sizeof(struct HFGlyphTrieLeaf_t));
+                // our children our leaves
+                child = calloc(sizeof(struct HFGlyphTrieLeaf_t), 1);
             } else {
-                child = NSAllocateCollectable(sizeof(struct HFGlyphTrieBranch_t), NSScannedOption); //collectable and scanned since it contains pointers
+                // our children are branches
+                child = calloc(sizeof(struct HFGlyphTrieBranch_t), 1);
             }
             /* We just zeroed out a block of memory and we are about to write its address somewhere where another thread could read it, so we need a memory barrier. */
             OSMemoryBarrier();
@@ -85,20 +86,13 @@ void HFGlyphTrieInitialize(struct HFGlyphTrie_t *trie, uint8_t keySize) {
     HFASSERT(keyBits % kHFGlyphTrieBranchFactor == 0);
     trie->branchingDepth = keyBits / kHFGlyphTrieBranchFactor;
     
-    /* The trie is initially empty.  Don't use bzero under GC, so that we get write barriers.  */
-    if (objc_collectingEnabled()) {
-        NSUInteger i;
-        for (i=0; i < kHFGlyphTrieBranchCount; i++) {
-            trie->root.children[i] = NULL;
-        }
-    } else {
-        bzero(&trie->root, sizeof trie->root);
-    }
+    /* The trie is initially empty. */
+    bzero(&trie->root, sizeof trie->root);
 }
 
 void HFGlyphTreeFree(struct HFGlyphTrie_t * trie) {
-    /* Don't try to free under GC.  And don't free if it's never been initialized. */
-    if (trie->branchingDepth > 0 && ! objc_collectingEnabled()) {
+    /* Don't free if it's never been initialized. */
+    if (trie->branchingDepth > 0) {
         freeTrie(&trie->root, trie->branchingDepth);
     }
 }

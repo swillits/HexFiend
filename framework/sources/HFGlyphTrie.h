@@ -22,7 +22,7 @@ static inline BOOL HFGlyphEqualsGlyph(struct HFGlyph_t a, struct HFGlyph_t b) {
 }
 
 struct HFGlyphTrieBranch_t {
-    __strong void *children[kHFGlyphTrieBranchCount];
+    void *children[kHFGlyphTrieBranchCount];
 };
 
 struct HFGlyphTrieLeaf_t {
@@ -43,7 +43,7 @@ __private_extern__ void HFGlyphTrieInsert(struct HFGlyphTrie_t *trie, NSUInteger
 /* Attempts to fetch a glyph.  If the glyph is not present, returns an HFGlyph_t set to all bits 0. */
 __private_extern__ struct HFGlyph_t HFGlyphTrieGet(const struct HFGlyphTrie_t *trie, NSUInteger key);
 
-/* Frees all storage associated with a glyph tree.  This is not necessary to call under GC. */
+/* Frees all storage associated with a glyph tree. */
 __private_extern__ void HFGlyphTreeFree(struct HFGlyphTrie_t * trie);
 
 

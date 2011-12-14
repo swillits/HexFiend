@@ -1313,7 +1313,7 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     
     /* Make an initial "everything replaces everything" instruction */
     insnCapacity = 128;
-    insns = NSAllocateCollectable(insnCapacity * sizeof *insns, 0);
+    insns = malloc(insnCapacity * sizeof *insns);
     insns[0].src = HFRangeMake(0, sourceLength);
     insns[0].dst = HFRangeMake(0, destLength);
     insnCount = 1;

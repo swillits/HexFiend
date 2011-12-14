@@ -1893,7 +1893,7 @@ static size_t unionAndCleanLists(NSRect *rectList, __strong id *valueList, size_
         [self insertText:@"\t"];
     }
     else if ([self respondsToSelector:sel]) {
-        [self performSelector:sel withObject:nil];
+        objc_msgSend(self, sel, nil);
     }
     else {
         return NO;
@@ -1908,7 +1908,7 @@ static size_t unionAndCleanLists(NSRect *rectList, __strong id *valueList, size_
         /* Nothing to do */
     }
     else if ([rep respondsToSelector:sel]) {
-        [rep performSelector:sel withObject:self];
+        objc_msgSend(rep, sel, self);
     }
     else {
         [super doCommandBySelector:sel];
