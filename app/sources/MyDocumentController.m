@@ -16,7 +16,7 @@
     BOOL callSuper = YES;
     unsigned char path[PATH_MAX + 1];
     struct stat sb;
-    if (absoluteURL && CFURLGetFileSystemRepresentation((CFURLRef)absoluteURL, YES, path, sizeof path) && 0 == stat((char *)path, &sb)) {
+    if (absoluteURL && CFURLGetFileSystemRepresentation((__bridge CFURLRef)absoluteURL, YES, path, sizeof path) && 0 == stat((char *)path, &sb)) {
         if (! S_ISREG(sb.st_mode) && ! S_ISDIR(sb.st_mode)) {
             callSuper = NO;
         }

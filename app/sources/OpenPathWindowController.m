@@ -31,10 +31,10 @@ enum {
     return @"OpenPathDialog";
 }
 
-static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
+CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
     if (! url) return NULL;
     CFURLRef result = nil;
-    CFStringRef path = CFURLCopyFileSystemPath((CFURLRef)url, kCFURLPOSIXPathStyle);
+    CFStringRef path = CFURLCopyFileSystemPath((__bridge CFURLRef)url, kCFURLPOSIXPathStyle);
     if (path) {
         char cpath[PATH_MAX + 1];
         if (CFStringGetFileSystemRepresentation(path, cpath, sizeof cpath)) {
@@ -147,7 +147,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
                 /* If this is a block device, try getting the corresponding character device, and offer to open that. */
                 CFURLRef newURL = copyCharacterDevicePathForPossibleBlockDevice(url);
                 if (newURL) {
-                    error = [self makeBlockToCharacterDeviceErrorForOriginalURL:url newURL:(NSURL *)newURL underlyingError:error];
+                    error = [self makeBlockToCharacterDeviceErrorForOriginalURL:url newURL:(__bridge NSURL *)newURL underlyingError:error];
                     CFRelease(newURL);
                 }
             }	    

@@ -14,16 +14,18 @@
     if (! hasAwokenFromNib) {
         hasAwokenFromNib = YES;
         defaultSize = [self frame].size;
-        viewsToInitialFrames = (__strong CFMutableDictionaryRef)CFMakeCollectable(CFDictionaryCreateMutable(NULL, 0, NULL, &kCFTypeDictionaryValueCallBacks));
+        NSArray *subviews = [self subviews];
+        NSPointerFunctionsOptions options = NSPointerFunctionsObjectPointerPersonality | NSPointerFunctionsStrongMemory;
+        viewsToInitialFrames = [[NSMapTable alloc] initWithKeyOptions:options valueOptions:options capacity:[subviews count]];
         
-        FOREACH(NSView *, subview, [self subviews]) {
-            CFDictionarySetValue(viewsToInitialFrames, subview, [NSValue valueWithRect:[subview frame]]);
+        FOREACH(NSView *, subview, subviews) {
+            [viewsToInitialFrames setObject:[NSValue valueWithRect:[subview frame]] forKey:subview];
         }
     }
 }
 
 - (void)dealloc {
-    CFRelease(viewsToInitialFrames);
+    [viewsToInitialFrames release];
     [super dealloc];
 }
 
@@ -95,7 +97,7 @@ static Position_t computePosition(id view, CGFloat startOffset, CGFloat startWid
     NSRect bounds = [self bounds];
     if (viewsToInitialFrames) {
         FOREACH(NSView *, view, [self subviews]) {
-            NSValue *originalFrameValue = (NSValue *)CFDictionaryGetValue(viewsToInitialFrames, view);
+            NSValue *originalFrameValue = (NSValue *)[viewsToInitialFrames objectForKey:view];
             if (originalFrameValue) 
                 [self resizeView:view withOriginalFrame:[originalFrameValue rectValue] intoBounds:bounds];
         }

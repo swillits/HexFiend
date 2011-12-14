@@ -45,8 +45,9 @@ static NSString *sNibName;
             if (! otherObjects) otherObjects = [NSMutableArray array];
             [otherObjects addObject:obj];
         }
-        /* Balance the retain acquired by virtue of being a top level object in a nib.  Call objc_msgSend directly so that the static analyzer can't see it, because the static analyzer doesn't know about top level objects from nibs. */
-        objc_msgSend(obj, @selector(autorelease));
+        /* Balance the retain acquired by virtue of being a top level object in a nib. ARC doesn't know about top level objects from nibs. */
+        //objc_msgSend(obj, @selector(autorelease));
+        //(__bridge_transfer id)obj;
     }
     HFASSERT(resultObject != nil);
     if (otherObjects != nil) [resultObject setOtherTopLevelObjects:otherObjects];
