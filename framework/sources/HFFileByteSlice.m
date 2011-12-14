@@ -22,7 +22,7 @@
     HFASSERT(HFSum(off, len) <= [file length]);
     REQUIRE_NOT_NULL(file);
     self = [super init];
-    fileReference = [file retain];
+    fileReference = file;
     offset = off;
     length = len;
     return self;
@@ -42,14 +42,10 @@
     HFASSERT(range.length > 0);
     HFASSERT(range.location < [self length]);
     HFASSERT([self length] - range.location >= range.length);
-    if (range.location == 0 && range.length == length) return [[self retain] autorelease];
-    return [[[[self class] alloc] initWithFile:fileReference offset:range.location + offset length:range.length] autorelease];
+    if (range.location == 0 && range.length == length) return self;
+    return [[[self class] alloc] initWithFile:fileReference offset:range.location + offset length:range.length];
 }
 
-- (void)dealloc {
-    [fileReference release];
-    [super dealloc];
-}
 
 - (BOOL)isSourcedFromFile {
     return YES;

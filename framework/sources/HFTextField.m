@@ -49,13 +49,6 @@
     return self;
 }
 
-- (void)dealloc {
-    [dataController release];
-    [layoutRepresenter release];
-    [hexRepresenter release];
-    [textRepresenter release];
-    [super dealloc];
-}
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
     USE(oldSize);

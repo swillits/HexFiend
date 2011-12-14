@@ -19,28 +19,20 @@
 
 - initWithReplacedData:(HFByteArray *)replacedData atAnchorLocation:(unsigned long long)anchor  {
     self = [super init];
-    deletedData = [replacedData retain];
+    deletedData = replacedData;
     byteArrayWasCopied = NO;
     anchorPoint = anchor;
     actionPoint = anchor;
-    
-    //under GC, hashOrRC is the hash value, and we're an identity hash.  Under retain/release, it's the retain count (minus one).
-    if (objc_collectingEnabled()) self->hashOrRC = (uint32_t)((intptr_t)self >> 2);
-    
     return self;
 }
 
 - initWithOverwrittenData:(HFByteArray *)overwrittenData atAnchorLocation:(unsigned long long)anchor {
     self = [super init];
     HFASSERT([overwrittenData length] > 0);
-    deletedData = [overwrittenData retain];
+    deletedData = overwrittenData;
     byteArrayWasCopied = NO;
     anchorPoint = anchor;
     actionPoint = HFSum(anchor, [overwrittenData length]);
-    
-    //under GC, hashOrRC is the hash value, and we're an identity hash.  Under retain/release, it's the retain count (minus one).
-    if (objc_collectingEnabled()) self->hashOrRC = (uint32_t)((intptr_t)self >> 2);
-    
     return self;
 }
 
@@ -65,7 +57,6 @@
     HFASSERT(byteArrayWasCopied == NO);
     HFByteArray *oldDeletedData = deletedData;
     deletedData = [deletedData mutableCopy];
-    [oldDeletedData release];
     byteArrayWasCopied = YES;
 }
 
@@ -84,7 +75,7 @@
     
     if (deletedData == nil) {
         HFASSERT(newlyOverwrittenData != nil);
-        deletedData = [newlyOverwrittenData retain];
+        deletedData = newlyOverwrittenData;
         byteArrayWasCopied = YES; //since we made a subarray, we own it
     }
     else if (newlyOverwrittenData != nil) { // we may have worked entirely within our previously overwritten data and thus have no newly overwritten data
@@ -124,7 +115,7 @@
         
         /* Instantiate deletedData if it's nil, or copy it if it's not nil and we need to */
         if (deletedData == nil) {
-            deletedData = [additionalDataToSave retain];
+            deletedData = additionalDataToSave;
             byteArrayWasCopied = YES;
         }
         else {
@@ -162,7 +153,7 @@
     }
     HFControllerCoalescedUndo *result = [[[self class] alloc] initWithReplacedData:invertedDeletedData atAnchorLocation:anchorPoint];
     if (deletedData) [result appendDataOfLength:[deletedData length]];
-    return [result autorelease];
+    return result;
 }
 
 - (BOOL)clearDependenciesOnRanges:(NSArray *)ranges inFile:(HFFileReference *)reference hint:(NSMutableDictionary *)hint {
@@ -170,35 +161,11 @@
     else return [deletedData clearDependenciesOnRanges:ranges inFile:reference hint:hint];
 }
 
-- (NSUInteger)hash {
-    return objc_collectingEnabled() ? (NSUInteger)hashOrRC : (NSUInteger)((intptr_t)self >> 2);
-}
-
-- (id)retain {
-    OSAtomicIncrement32((int32_t *)&hashOrRC);
-    return self;
-}
-
-- (oneway void)release {
-    if (OSAtomicDecrement32((int32_t *)&hashOrRC) == -1) {
-        [self dealloc];
-    }
-}
-
-- (NSUInteger)retainCount {
-    return 1 + hashOrRC;
-}
-
 - (void)invalidate {
-    [deletedData release];
     deletedData = nil;
 }
 
 
-- (void)dealloc {
-    [deletedData release];
-    [super dealloc];
-}
 
 @end
 
@@ -209,11 +176,9 @@
     REQUIRE_NOT_NULL(arrays);
     REQUIRE_NOT_NULL(ranges);
     self = [super init];
-    self->byteArrays = [arrays retain];
-    self->replacementRanges = [ranges retain];
+    self->byteArrays = arrays;
+    self->replacementRanges = ranges;
     self->selectionAction = action;
-    //under GC, hashOrRC is the hash value, and we're an identity hash.  Under retain/release, it's the retain count (minus one).
-    if (objc_collectingEnabled()) self->hashOrRC = (uint32_t)((intptr_t)self >> 2);
     return self;
 
 }
@@ -241,36 +206,10 @@
     return result;
 }
 
-- (NSUInteger)hash {
-    return objc_collectingEnabled() ? (NSUInteger)hashOrRC : (NSUInteger)((intptr_t)self >> 2);
-}
-
-- (id)retain {
-    OSAtomicIncrement32((int32_t *)&hashOrRC);
-    return self;
-}
-
-- (oneway void)release {
-    if (OSAtomicDecrement32((int32_t *)&hashOrRC) == -1) {
-        [self dealloc];
-    }
-}
-
-- (NSUInteger)retainCount {
-    return 1 + hashOrRC;
-}
-
 - (void)invalidate {
-    [byteArrays release];
     byteArrays = nil;
-    [replacementRanges release];
     replacementRanges = nil;
 }
 
-- (void)dealloc {
-    [byteArrays release];
-    [replacementRanges release];
-    [super dealloc];
-}
 
 @end

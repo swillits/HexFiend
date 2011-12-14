@@ -29,7 +29,6 @@
         string = [[NSString alloc] initWithFormat:@"%lX", nybbleValue];
         [[storage mutableString] setString:string];
         [storage addAttribute:NSFontAttributeName value:font range:NSMakeRange(0, 1)];
-        [string release];
         if (HFIsRunningOnLeopardOrLater()) [layoutManager invalidateLayoutForCharacterRange:NSMakeRange(0, 1) actualCharacterRange:NULL];
         HFASSERT([layoutManager numberOfGlyphs] == 1);
         glyphCount = [layoutManager getGlyphs:glyphs range:NSMakeRange(0, 1)];
@@ -38,8 +37,6 @@
         glyphAdvancement = HFMax(glyphAdvancement, [font advancementForGlyph:glyphs[0]].width);
     }
     
-    [storage release];
-    [layoutManager release];
     
     spaceAdvancement = glyphAdvancement;
 }

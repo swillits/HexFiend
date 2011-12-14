@@ -27,7 +27,7 @@
 @implementation HFStatusBarView
 
 - (void)_sharedInitStatusBarView {
-    NSMutableParagraphStyle *style = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
+    NSMutableParagraphStyle *style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [style setAlignment:NSCenterTextAlignment];
     cellAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:[NSColor colorWithCalibratedWhite:(CGFloat).15 alpha:1], NSForegroundColorAttributeName, [NSFont labelFontOfSize:10], NSFontAttributeName, style, NSParagraphStyleAttributeName, nil];
     cell = [[NSCell alloc] initTextCell:@""];
@@ -57,7 +57,7 @@
 }
 
 - (void)setString:(NSString *)string {
-    [cell setAttributedStringValue:[[[NSAttributedString alloc] initWithString:string attributes:cellAttributes] autorelease]];
+    [cell setAttributedStringValue:[[NSAttributedString alloc] initWithString:string attributes:cellAttributes]];
     cellSize = [cell cellSize];
     [self setNeedsDisplay:YES];
 }
@@ -132,9 +132,6 @@
 
 - (void)dealloc {
     HFUnregisterViewForWindowAppearanceChanges(self, registeredForAppNotifications);
-    [cell release];
-    [cellAttributes release];
-    [super dealloc];
 }
 
 @end

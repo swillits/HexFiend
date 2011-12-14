@@ -136,7 +136,6 @@ static BOOL nsindexset_containsIndexesInRange(NSIndexSet *indexSet, NSRange rang
 
 - (void)dealloc {
     free(multipleRanges);
-    [super dealloc];
 }
 
 - (id)initWithIndexSet:(HFIndexSet *)otherSet {
@@ -161,7 +160,7 @@ static BOOL nsindexset_containsIndexesInRange(NSIndexSet *indexSet, NSRange rang
 - (id)copyWithZone:(NSZone *)zone {
     /* Usual Cocoa thing */
     USE(zone);
-    return [self retain];
+    return self;
 }
 
 - (id)mutableCopyWithZone:(NSZone *)zone {
@@ -240,7 +239,7 @@ static BOOL nsindexset_containsIndexesInRange(NSIndexSet *indexSet, NSRange rang
 }
 
 - (NSString *)description {
-    NSMutableString *result = [[[super description] mutableCopy] autorelease];
+    NSMutableString *result = [[super description] mutableCopy];
     [result appendString:@"("];
     if (rangeCount == 0) {
         [result appendString:@"no indexes"];

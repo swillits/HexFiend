@@ -17,33 +17,24 @@
     return self;
 }
 
-- (void)dealloc {
-    [foregroundColor release];
-    [backgroundColor release];
-    [bookmarkStarts release];
-    [bookmarkExtents release];
-    [super dealloc];
-}
 
 - (NSColor *)foregroundColor {
-    return [[foregroundColor retain] autorelease]; 
+    return foregroundColor; 
 }
 
 - (void)setForegroundColor:(NSColor *)theForegroundColor {
     if (foregroundColor != theForegroundColor) {
-        [foregroundColor release];
-        foregroundColor = [theForegroundColor retain];
+        foregroundColor = theForegroundColor;
     }
 }
 
 - (NSColor *)backgroundColor {
-    return [[backgroundColor retain] autorelease]; 
+    return backgroundColor; 
 }
 
 - (void)setBackgroundColor:(NSColor *)theBackgroundColor {
     if (backgroundColor != theBackgroundColor) {
-        [backgroundColor release];
-        backgroundColor = [theBackgroundColor retain];
+        backgroundColor = theBackgroundColor;
     }
 }
 
@@ -69,7 +60,6 @@
 
 - (void)setBookmarkExtents:(NSIndexSet *)val {
     if (bookmarkExtents != val) {
-	[bookmarkExtents release];
 	bookmarkExtents = [val copy];
     }
 }
@@ -80,7 +70,6 @@
 
 - (void)setBookmarkStarts:(NSIndexSet *)val {
     if (bookmarkStarts != val) {
-	[bookmarkStarts release];
 	bookmarkStarts = [val copy];
     }
 }
@@ -91,7 +80,6 @@
 
 - (void)setBookmarkEnds:(NSIndexSet *)ends {
     if (bookmarkEnds != ends) {
-	[bookmarkEnds release];
 	bookmarkEnds = [ends copy];
     }
 }

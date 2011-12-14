@@ -445,6 +445,7 @@ NSString *HFDescribeByteCount(unsigned long long count);
 
 @end
 
+
 #ifndef NDEBUG
 void HFStartTiming(const char *name);
 void HFStopTiming(void);

@@ -51,10 +51,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     return [NSString stringWithFormat:@"[%@ {%llu, %llu}]", name, range.location, range.length];
 }
 
-- (void)dealloc {
-    [name release];
-    [super dealloc];
-}
 
 - (NSComparisonResult)compare:(HFByteRangeAttributeRun *)run {
     return (range.location > run->range.location) - (run->range.location > range.location);
@@ -66,7 +62,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
 
 - (id)init {
     if ([self class] == [HFByteRangeAttributeArray class]) {
-        [self release];
         return [[HFAnnotatedTreeByteRangeAttributeArray alloc] init];
     }
     return [super init];
@@ -121,41 +116,39 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     NSUInteger amt = 0;
     int num = 0;
     const BOOL log = NO;
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     while (remaining.length > 0) {
-        unsigned long long applied1, applied2;
-        NSSet *atts1 = [self attributesAtIndex:remaining.location length:&applied1];
-        NSSet *atts2 = [array attributesAtIndex:remaining.location length:&applied2];
-        if (applied1 != applied2) {
-            if (log) {
-                NSLog(@"%d Failed %d", num, __LINE__);
+        @autoreleasepool {
+            unsigned long long applied1, applied2;
+            NSSet *atts1 = [self attributesAtIndex:remaining.location length:&applied1];
+            NSSet *atts2 = [array attributesAtIndex:remaining.location length:&applied2];
+            if (applied1 != applied2) {
+                if (log) {
+                    NSLog(@"%d Failed %d", num, __LINE__);
+                }
+                [array attributesAtIndex:remaining.location length:&applied2];
+                result = NO;
+                break;
             }
-            [array attributesAtIndex:remaining.location length:&applied2];
-            result = NO;
-            break;
-        }
-        if (result && !atts1 != !atts2) {
-            if (log) {
-                NSLog(@"%d Failed %d", num, __LINE__);
+            if (result && !atts1 != !atts2) {
+                if (log) {
+                    NSLog(@"%d Failed %d", num, __LINE__);
+                }
+                result = NO;
+                break;
             }
-            result = NO;
-            break;
-        }
-        if (! (atts1 == atts2 || [atts1 isEqual:atts2])) {
-            if (log) {
-                NSLog(@"%d Failed %d", num, __LINE__);
+            if (! (atts1 == atts2 || [atts1 isEqual:atts2])) {
+                if (log) {
+                    NSLog(@"%d Failed %d", num, __LINE__);
+                }
+                result = NO;
+                break;
             }
-            result = NO;
-            break;
+            HFASSERT(applied1 <= remaining.length);
+            remaining.length -= applied1;
+            remaining.location += applied1;
+            amt++;
         }
-        HFASSERT(applied1 <= remaining.length);
-        remaining.length -= applied1;
-        remaining.location += applied1;
-        amt++;
-        [pool drain];
-        pool = [[NSAutoreleasePool alloc] init];
     }
-    [pool drain];
     return result;
 }
 
@@ -177,10 +170,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     return self;
 }
 
-- (void)dealloc {
-    [attributeRuns release];
-    [super dealloc];
-}
 
 - (id)mutableCopyWithZone:(NSZone *)zone {
     HFNaiveByteRangeAttributeArray *result = [[[self class] allocWithZone:zone] init];
@@ -196,7 +185,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     HFASSERT(attributeName != nil);
     HFByteRangeAttributeRun *run = [[HFByteRangeAttributeRun alloc] initWithName:attributeName range:range];
     [attributeRuns addObject:run];
-    [run release];
 }
 
 -  (void)removeAttribute:(NSString *)attributeName range:(HFRange)range {
@@ -218,7 +206,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
                 /* Replacing existing run with remainder */
                 run = [[HFByteRangeAttributeRun alloc] initWithName:attributeName range:(leftRemainder.length ? leftRemainder : rightRemainder)];
                 [attributeRuns replaceObjectAtIndex:index withObject:run];
-                [run release];
             }
             if (leftRemainder.length && rightRemainder.length) {
                 /* We have two to insert.  The second must be the right remainder, because we inserted the left up above. */
@@ -226,7 +213,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
                 max += 1;
                 run = [[HFByteRangeAttributeRun alloc] initWithName:attributeName range:rightRemainder];
                 [attributeRuns insertObject:run atIndex:index];
-                [run release];                
             }
             if (! leftRemainder.length && ! rightRemainder.length) {
                 /* We don't have any remainder.  Just delete it. */
@@ -237,7 +223,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
         }
     }
     [attributeRuns removeObjectsAtIndexes:indexesToRemove];
-    [indexesToRemove release];
 }
 
 - (void)removeAttribute:(NSString *)attributeName {
@@ -380,11 +365,9 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
         } else {
             HFByteRangeAttributeRun *newRun = [[HFByteRangeAttributeRun alloc] initWithName:run->name range:newRange];
             [attributeRuns replaceObjectAtIndex:idx withObject:newRun];
-            [newRun release];
         }
         idx++;
     }
-    [localRuns release];
 }
 
 @end
@@ -406,7 +389,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
 
 - (id)mutableCopyWithZone:(NSZone *)zone {
     HFByteRangeAttributeArrayNode *result = [super mutableCopyWithZone:zone];
-    [result->attribute release]; //probably this is nil
     result->attribute = [attribute copy];
     result->range = range;
     return result;
@@ -419,10 +401,6 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     return self;
 }
 
-- (void)dealloc {
-    [attribute release];
-    [super dealloc];
-}
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"[%p: %@ {%llu, %llu}]", self, attribute, range.location, range.length];
@@ -521,11 +499,6 @@ static BOOL applyHandlerForNodesInRange(HFByteRangeAttributeArrayNode *node, HFR
     return self;
 }
 
-- (void)dealloc {
-    [atree release];
-    [attributesToNodes release];
-    [super dealloc];
-}
 
 - (NSString *)description {
     NSMutableArray *nodes = [[NSMutableArray alloc] init];
@@ -533,7 +506,6 @@ static BOOL applyHandlerForNodesInRange(HFByteRangeAttributeArrayNode *node, HFR
         [nodes addObject:node];
     }
     NSString *result = [NSString stringWithFormat:@"<%@: %p %@>", [self class], self, nodes];
-    [nodes release];
     return result;
 }
 
@@ -543,7 +515,6 @@ static void insertIntoDictionaryOfSets(NSMutableDictionary *dictionary, NSString
     if (! set) {
         set = [[NSMutableSet alloc] init];
         [dictionary setObject:set forKey:key];
-        [set release];
     }
     [set addObject:value];
 }
@@ -576,7 +547,6 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
     NSMutableDictionary *temp = [[NSMutableDictionary alloc] init];
     [self populateAttributesToNodes:temp];
     HFASSERT([temp isEqual:attributesToNodes]);
-    [temp release];
 }
 #endif
 
@@ -584,7 +554,6 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
     HFByteRangeAttributeArrayNode *node = [[HFByteRangeAttributeArrayNode alloc] initWithAttribute:attributeName range:range];
     [atree insertNode:node];
     insertIntoDictionaryOfSets(attributesToNodes, attributeName, node);
-    [node release];
 }
 
 - (void)removeAttribute:(NSString *)attributeName range:(HFRange)range {
@@ -615,7 +584,6 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
             HFByteRangeAttributeArrayNode *newNode = [[HFByteRangeAttributeArrayNode alloc] initWithAttribute:attributeName range:leftRemainder];
             [atree insertNode:newNode];
             [allNodesWithAttribute addObject:newNode];
-            [newNode release];
             
         }
         if (HFRangeExtendsPastRange(node->range, range)) {
@@ -624,10 +592,8 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
             HFByteRangeAttributeArrayNode *newNode = [[HFByteRangeAttributeArrayNode alloc] initWithAttribute:attributeName range:rightRemainder];
             [atree insertNode:newNode];
             [allNodesWithAttribute addObject:newNode];
-            [newNode release];
         }
     }
-    [nodesToDelete release];
     
     /* Maybe allNodesWithAttribute is now empty */
     if (! [allNodesWithAttribute count]) {
@@ -680,7 +646,7 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
     }];
     HFASSERT(maxLocation > index);
     if (length) *length = maxLocation - index;
-    return [attributes autorelease];
+    return attributes;
 }
 
 - (HFRange)rangeOfAttribute:(NSString *)attribute {
@@ -719,99 +685,97 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
 }
 
 - (void)byteRange:(HFRange)dyingRange wasReplacedByBytesOfLength:(unsigned long long)replacementLength {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    @autoreleasepool {
     
-    NSMapTable *nodesToReplace = [NSMapTable mapTableWithStrongToStrongObjects];
-    
-    const id null = [NSNull null];
-    
-    HFRange extendedRange = HFRangeMake(dyingRange.location, ULLONG_MAX - dyingRange.location);
-    [self walkNodesInRange:extendedRange withBlock:^(HFByteRangeAttributeArrayNode *node, HFRange range) {
-        USE(range);
-        const HFRange runRange = node->range;
-        HFRange newRange;
+        NSMapTable *nodesToReplace = [NSMapTable mapTableWithStrongToStrongObjects];
         
-        /* Check if we are inserting (not replacing) at either the very beginning of the run, or very end. */
-        BOOL insertionAtRunBeginning = (dyingRange.length == 0 && dyingRange.location == runRange.location);
-        BOOL insertionAtRunEnd = (dyingRange.length == 0 && dyingRange.location == HFMaxRange(runRange));
+        const id null = [NSNull null];
+        
+        HFRange extendedRange = HFRangeMake(dyingRange.location, ULLONG_MAX - dyingRange.location);
+        [self walkNodesInRange:extendedRange withBlock:^(HFByteRangeAttributeArrayNode *node, HFRange range) {
+            USE(range);
+            const HFRange runRange = node->range;
+            HFRange newRange;
+            
+            /* Check if we are inserting (not replacing) at either the very beginning of the run, or very end. */
+            BOOL insertionAtRunBeginning = (dyingRange.length == 0 && dyingRange.location == runRange.location);
+            BOOL insertionAtRunEnd = (dyingRange.length == 0 && dyingRange.location == HFMaxRange(runRange));
 
-        if (HFRangeIsSubrangeOfRange(runRange, dyingRange)) {
-            /* This run is toast */
-            newRange = (HFRange){0, 0};
-        } else if (HFRangeIsSubrangeOfRange(dyingRange, runRange) && !insertionAtRunBeginning && !insertionAtRunEnd) {
-            /* The replaced range is wholly contained within this run, so expand the run. The location doesn't need to change. */
-            newRange.location = runRange.location;
-            newRange.length = HFSum(HFSubtract(runRange.length, dyingRange.length), replacementLength);
-        } else if (HFMaxRange(dyingRange) <= runRange.location || insertionAtRunBeginning) {
-            /* The dying range is wholly before this run, so adjust the run location. The length doesn't need to change. */
-            newRange.length = runRange.length;
-            newRange.location = HFSum(HFSubtract(runRange.location, dyingRange.length), replacementLength);
-        } else if (dyingRange.location >= HFMaxRange(runRange) || insertionAtRunEnd) {
-            /* The dying range is wholly after this run, so nothing to do */
-            newRange = runRange;
-        } else {
-            /* The range must intersect */
-            HFRange intersection = HFIntersectionRange(dyingRange, runRange);
-            HFASSERT(intersection.length > 0);
-            
-            /* We intersect the range that's being deleted. Figure out where we should be preserved (if at all). */
-            HFRange leftRemainingRange = {0, 0}, rightRemainingRange = {0, 0};
-            if (runRange.location < intersection.location) {
-                leftRemainingRange = HFRangeMake(runRange.location, HFSubtract(intersection.location, runRange.location));
+            if (HFRangeIsSubrangeOfRange(runRange, dyingRange)) {
+                /* This run is toast */
+                newRange = (HFRange){0, 0};
+            } else if (HFRangeIsSubrangeOfRange(dyingRange, runRange) && !insertionAtRunBeginning && !insertionAtRunEnd) {
+                /* The replaced range is wholly contained within this run, so expand the run. The location doesn't need to change. */
+                newRange.location = runRange.location;
+                newRange.length = HFSum(HFSubtract(runRange.length, dyingRange.length), replacementLength);
+            } else if (HFMaxRange(dyingRange) <= runRange.location || insertionAtRunBeginning) {
+                /* The dying range is wholly before this run, so adjust the run location. The length doesn't need to change. */
+                newRange.length = runRange.length;
+                newRange.location = HFSum(HFSubtract(runRange.location, dyingRange.length), replacementLength);
+            } else if (dyingRange.location >= HFMaxRange(runRange) || insertionAtRunEnd) {
+                /* The dying range is wholly after this run, so nothing to do */
+                newRange = runRange;
+            } else {
+                /* The range must intersect */
+                HFRange intersection = HFIntersectionRange(dyingRange, runRange);
+                HFASSERT(intersection.length > 0);
+                
+                /* We intersect the range that's being deleted. Figure out where we should be preserved (if at all). */
+                HFRange leftRemainingRange = {0, 0}, rightRemainingRange = {0, 0};
+                if (runRange.location < intersection.location) {
+                    leftRemainingRange = HFRangeMake(runRange.location, HFSubtract(intersection.location, runRange.location));
+                }
+                if (HFMaxRange(runRange) > HFMaxRange(intersection)) {
+                    rightRemainingRange = HFRangeMake(HFMaxRange(intersection), HFSubtract(HFMaxRange(runRange), HFMaxRange(intersection)));
+                }
+                
+                /* Now we have up to two ranges. Pick the longer one */
+                newRange = (leftRemainingRange.length >= rightRemainingRange.length ? leftRemainingRange : rightRemainingRange);
+                
+                /* One range must be non-empty, otherwise we would have fallen into one of the tests above */
+                HFASSERT(newRange.length > 0);
+                
+                /* The new range location is the smaller of the dying range location and the remaining range location */
+                newRange.location = MIN(newRange.location, dyingRange.location + replacementLength);
             }
-            if (HFMaxRange(runRange) > HFMaxRange(intersection)) {
-                rightRemainingRange = HFRangeMake(HFMaxRange(intersection), HFSubtract(HFMaxRange(runRange), HFMaxRange(intersection)));
+            
+            HFASSERT([nodesToReplace objectForKey:node] == nil);
+            if (newRange.length == 0) {
+                /* Deleted */
+                [nodesToReplace setObject:null forKey:node];
+            } else if (HFRangeEqualsRange(newRange, runRange)) {
+                /* No change */
+            } else {
+                HFByteRangeAttributeArrayNode *newNode = [[HFByteRangeAttributeArrayNode alloc] initWithAttribute:node->attribute range:newRange];
+                [nodesToReplace setObject:newNode forKey:node];
             }
             
-            /* Now we have up to two ranges. Pick the longer one */
-            newRange = (leftRemainingRange.length >= rightRemainingRange.length ? leftRemainingRange : rightRemainingRange);
-            
-            /* One range must be non-empty, otherwise we would have fallen into one of the tests above */
-            HFASSERT(newRange.length > 0);
-            
-            /* The new range location is the smaller of the dying range location and the remaining range location */
-            newRange.location = MIN(newRange.location, dyingRange.location + replacementLength);
-        }
+            /* Continue */
+            return (BOOL)YES;
+        }];
         
-        HFASSERT([nodesToReplace objectForKey:node] == nil);
-        if (newRange.length == 0) {
-            /* Deleted */
-            [nodesToReplace setObject:null forKey:node];
-        } else if (HFRangeEqualsRange(newRange, runRange)) {
-            /* No change */
-        } else {
-            HFByteRangeAttributeArrayNode *newNode = [[HFByteRangeAttributeArrayNode alloc] initWithAttribute:node->attribute range:newRange];
-            [nodesToReplace setObject:newNode forKey:node];
-            [newNode release];
+        /* Apply our replacements */
+        NSEnumerator *dyingNodes = [nodesToReplace keyEnumerator];
+        HFByteRangeAttributeArrayNode *dyingNode;
+        while ((dyingNode = [dyingNodes nextObject])) {
+            HFByteRangeAttributeArrayNode *replacementNodeOrNULL = [nodesToReplace objectForKey:dyingNode];
+            
+            /* Remove existing node */
+            [atree removeNode:dyingNode];
+            removeFromDictionaryOfSets(attributesToNodes, dyingNode->attribute, dyingNode);
+            
+            /* Add any replacement */
+            if (replacementNodeOrNULL != null) {
+                [atree insertNode:replacementNodeOrNULL];
+                insertIntoDictionaryOfSets(attributesToNodes, replacementNodeOrNULL->attribute, replacementNodeOrNULL);
+            }
         }
-        
-        /* Continue */
-        return (BOOL)YES;
-    }];
     
-    /* Apply our replacements */
-    NSEnumerator *dyingNodes = [nodesToReplace keyEnumerator];
-    HFByteRangeAttributeArrayNode *dyingNode;
-    while ((dyingNode = [dyingNodes nextObject])) {
-        HFByteRangeAttributeArrayNode *replacementNodeOrNULL = [nodesToReplace objectForKey:dyingNode];
-        
-        /* Remove existing node */
-        [atree removeNode:dyingNode];
-        removeFromDictionaryOfSets(attributesToNodes, dyingNode->attribute, dyingNode);
-        
-        /* Add any replacement */
-        if (replacementNodeOrNULL != null) {
-            [atree insertNode:replacementNodeOrNULL];
-            insertIntoDictionaryOfSets(attributesToNodes, replacementNodeOrNULL->attribute, replacementNodeOrNULL);
-        }
     }
-    
-    [pool drain];
 }
 
 - (id)mutableCopyWithZone:(NSZone *)zone {
     HFAnnotatedTreeByteRangeAttributeArray *result = [[[self class] alloc] init];
-    [result->atree release];
     result->atree = [atree mutableCopyWithZone:zone];
     [result populateAttributesToNodes:result->attributesToNodes];
     VERIFY_INTEGRITY(self);
@@ -824,7 +788,7 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
 }
 
 - (NSEnumerator *)attributeEnumerator {
-    return [[[HFAnnotatedTreeByteRangeAttributeArrayEnumerator alloc] initWithNode:[atree firstNode]] autorelease];
+    return [[HFAnnotatedTreeByteRangeAttributeArrayEnumerator alloc] initWithNode:[atree firstNode]];
 }
 
 @end

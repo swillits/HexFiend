@@ -29,7 +29,6 @@ static CGFloat maximumDigitAdvanceForFont(NSFont *font) {
         char c = "0123456789ABCDEF"[i];
         NSString *string = [[NSString alloc] initWithBytes:&c length:1 encoding:NSASCIIStringEncoding];
         [storage replaceCharactersInRange:NSMakeRange(0, (i ? 1 : 0)) withString:string];
-        [string release];
         glyphs[i] = [manager glyphAtIndex:0 isValidIndex:NULL];
         HFASSERT(glyphs[i] != NSNullGlyph);
     }
@@ -37,9 +36,6 @@ static CGFloat maximumDigitAdvanceForFont(NSFont *font) {
     /* Get the advancements of each of those glyphs */
     [font getAdvancements:advancements forGlyphs:glyphs count:sizeof glyphs / sizeof *glyphs];
     
-    [manager release];
-    [attributesDictionary release];
-    [storage release];
     
     /* Find the widest digit */
     for (NSUInteger i=0; i < sizeof glyphs / sizeof *glyphs; i++) {

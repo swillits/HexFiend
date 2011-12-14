@@ -49,10 +49,6 @@ static HFAnnotatedTreeNode *right_child(HFAnnotatedTreeNode *node);
     return self;
 }
 
-- (void)dealloc {
-    [root release];
-    [super dealloc];
-}
 
 - (id)rootNode {
     return root;
@@ -65,7 +61,6 @@ static HFAnnotatedTreeNode *right_child(HFAnnotatedTreeNode *node);
 - (id)mutableCopyWithZone:(NSZone *)zone {
     HFAnnotatedTree *copied = [[[self class] alloc] init];
     copied->annotater = annotater;
-    [copied->root release];
     copied->root = [root mutableCopyWithZone:zone];
     return copied;
 }
@@ -79,7 +74,7 @@ static HFAnnotatedTreeNode *right_child(HFAnnotatedTreeNode *node);
     HFASSERT(node != nil);
     HFASSERT(get_parent(node) == nil);    
     /* Insert into the root */
-    insert(root, [node retain], self);
+    insert(root, node, self);
     VERIFY_INTEGRITY();
 }
 
@@ -87,7 +82,6 @@ static HFAnnotatedTreeNode *right_child(HFAnnotatedTreeNode *node);
     HFASSERT(node != nil);
     HFASSERT(get_parent(node) != nil);
     delete(node, self);
-    [node release];
     VERIFY_INTEGRITY();
 }
 
@@ -110,11 +104,6 @@ static HFAnnotatedTreeAnnotaterFunction_t get_annotater(HFAnnotatedTree *tree) {
 
 @implementation HFAnnotatedTreeNode
 
-- (void)dealloc {
-    [left release];
-    [right release];
-    [super dealloc];
-}
 
 - (NSComparisonResult)compare:(HFAnnotatedTreeNode *)node {
     USE(node);

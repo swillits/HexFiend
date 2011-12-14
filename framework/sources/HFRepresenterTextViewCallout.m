@@ -58,7 +58,7 @@ static NSBezierPath *copyTeardropPath(void) {
         
         sPath = path;
     }
-    return [sPath retain];
+    return sPath;
 }
 
 
@@ -117,12 +117,6 @@ static Wedge_t wedgeUnion(Wedge_t wedge1, Wedge_t wedge2) {
     return self;
 }
 
-- (void)dealloc {
-    [representedObject release];
-    [color release];
-    [label release];
-    [super dealloc];
-}
 
 - (NSComparisonResult)compare:(HFRepresenterTextViewCallout *)callout {
     return [representedObject compare:[callout representedObject]];
@@ -190,7 +184,7 @@ static double distanceMod1(double a, double b) {
     const CGFloat lineHeight = [textView lineHeight];
     const NSRect bounds = [textView bounds];
     
-    NSMutableArray *remainingCallouts = [[callouts mutableCopy] autorelease];
+    NSMutableArray *remainingCallouts = [callouts mutableCopy];
     [remainingCallouts sortUsingSelector:@selector(compare:)];
     
     while ([remainingCallouts count] > 0) {
@@ -316,7 +310,6 @@ static double distanceMod1(double a, double b) {
         [remainingCallouts removeObjectsInArray:sharedCallouts];
     }
     
-    [dropsPerByteLoc release];
 }
 
 - (CGAffineTransform)teardropTransform {
@@ -355,7 +348,6 @@ static double distanceMod1(double a, double b) {
     [shadow setShadowOffset:NSMakeSize(HFShadowXOffset - HFShadowOffscreenHack, HFShadowYOffset)];
     [shadow setShadowColor:[NSColor colorWithDeviceWhite:0. alpha:.5]];
     [shadow set];
-    [shadow release];
     
     // Draw the shadow first and separately
     CGAffineTransform transform = [self shadowTransform];
@@ -363,7 +355,6 @@ static double distanceMod1(double a, double b) {
     
     NSBezierPath *teardrop = copyTeardropPath();
     [teardrop fill];
-    [teardrop release];
     
     // Clear the shadow
     CGContextSetShadowWithColor(ctx, CGSizeZero, 0, NULL);
@@ -379,7 +370,7 @@ static double distanceMod1(double a, double b) {
     CTFontRef ctfont = CTFontCreateWithName(CFSTR("Helvetica-Bold"), 1., NULL);
     if (ctfont) {
         // Set the font
-        [(NSFont *)ctfont set];
+        [(__bridge NSFont *)ctfont set];
             
         // Get characters
         NSUInteger labelLength = MIN([label length], kHFRepresenterTextViewCalloutMaxGlyphCount);
@@ -416,7 +407,6 @@ static double distanceMod1(double a, double b) {
         // Draw the teardrop
         NSBezierPath *teardrop = copyTeardropPath();
         [teardrop fill];
-        [teardrop release];
         
         // Draw the text with white and alpha.  Use blend mode copy so that we clip out the shadow, and when the transparency layer is ended we'll composite over the text.
         CGFloat textScale = (glyphCount == 1 ? 24 : 20);

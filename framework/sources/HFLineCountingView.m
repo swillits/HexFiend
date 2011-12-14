@@ -50,12 +50,6 @@
 
 - (void)dealloc {
     HFUnregisterViewForWindowAppearanceChanges(self, registeredForAppNotifications);
-    [font release];
-    [layoutManager release];
-    [textContainer release];
-    [textStorage release];
-    [textAttributes release];
-    [super dealloc];
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
@@ -73,7 +67,7 @@
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     [self _sharedInitLineCountingView];
-    font = [[coder decodeObjectForKey:@"HFFont"] retain];
+    font = [coder decodeObjectForKey:@"HFFont"];
     lineHeight = (CGFloat)[coder decodeDoubleForKey:@"HFLineHeight"];
     representer = [coder decodeObjectForKey:@"HFRepresenter"];
     bytesPerLine = (NSUInteger)[coder decodeInt64ForKey:@"HFBytesPerLine"];
@@ -218,7 +212,6 @@ static inline int common_prefix_length(const char *a, const char *b) {
             if (previousTextStorageCharacterCount == 0) {
                 NSDictionary *atts = [[NSDictionary alloc] initWithObjectsAndKeys:font, NSFontAttributeName, [NSColor colorWithCalibratedWhite:(CGFloat).1 alpha:(CGFloat).8], NSForegroundColorAttributeName, nil];
                 [textStorage setAttributes:atts range:NSMakeRange(0, newStringLength)];
-                [atts release];
             }
             glyphCount = [layoutManager numberOfGlyphs];
             if (glyphCount > 0) {
@@ -226,7 +219,6 @@ static inline int common_prefix_length(const char *a, const char *b) {
                 [layoutManager drawGlyphsForGlyphRange:NSMakeRange(0, glyphCount) atPoint:NSMakePoint(textRect.origin.x + textRect.size.width - maxX, textRect.origin.y)];
             }
             previousTextStorageCharacterCount = newStringLength;
-            [replacementCharacters release];
             memcpy(previousBuff, buff, newStringLength + 1);
             previousStringLength = newStringLength;
         }
@@ -253,9 +245,7 @@ static inline int common_prefix_length(const char *a, const char *b) {
         NSMutableParagraphStyle *mutableStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
         [mutableStyle setAlignment:NSRightTextAlignment];
         NSParagraphStyle *paragraphStyle = [mutableStyle copy];
-        [mutableStyle release];
         textAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:font, NSFontAttributeName, [NSColor colorWithCalibratedWhite:(CGFloat).1 alpha:(CGFloat).8], NSForegroundColorAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
-        [paragraphStyle release];
     }
     
     char formatString[64];
@@ -268,7 +258,6 @@ static inline int common_prefix_length(const char *a, const char *b) {
             HFASSERT(newStringLength > 0);
             NSString *string = [[NSString alloc] initWithBytesNoCopy:buff length:newStringLength encoding:NSASCIIStringEncoding freeWhenDone:NO];
             [string drawInRect:textRect withAttributes:textAttributes];
-            [string release];
         }
         textRect.origin.y += lineHeight;
         lineIndex++;
@@ -334,7 +323,6 @@ static inline int common_prefix_length(const char *a, const char *b) {
         /* This usually indicates that our bytes per line or line number format changed, and we need to just recalculate everything */
         NSString *string = [self newLineStringForRange:HFRangeMake(startingLineIndex, linesRemaining)];
         [textStorage replaceCharactersInRange:NSMakeRange(0, [textStorage length]) withString:string];
-        [string release];
         
     }
     else {
@@ -380,7 +368,6 @@ static inline int common_prefix_length(const char *a, const char *b) {
                 NSString *leftRangeString = [self newLineStringForRange:leftRangeToStore];
                 [textStorage replaceCharactersInRange:rangeToDelete withString:leftRangeString];
                 if (debug) NSLog(@"Replacing text range %@ with %@", NSStringFromRange(rangeToDelete), leftRangeString);
-                [leftRangeString release];
             }
         }
         
@@ -397,7 +384,6 @@ static inline int common_prefix_length(const char *a, const char *b) {
                 NSString *rightRangeString = [self newLineStringForRange:rightRangeToStore];
                 [textStorage replaceCharactersInRange:rangeToDelete withString:rightRangeString];
                 if (debug) NSLog(@"Replacing text range %@ with %@ (for range %@)", NSStringFromRange(rangeToDelete), rightRangeString, HFRangeToString(rightRangeToStore));
-                [rightRangeString release];
             }
         }
     }
@@ -406,9 +392,7 @@ static inline int common_prefix_length(const char *a, const char *b) {
         NSMutableParagraphStyle *mutableStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
         [mutableStyle setAlignment:NSRightTextAlignment];
         NSParagraphStyle *paragraphStyle = [mutableStyle copy];
-        [mutableStyle release];
         textAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:font, NSFontAttributeName, [NSColor colorWithCalibratedWhite:(CGFloat).1 alpha:(CGFloat).8], NSForegroundColorAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
-        [paragraphStyle release];
         [textStorage setAttributes:textAttributes range:NSMakeRange(0, [textStorage length])];
     }
     
@@ -422,7 +406,6 @@ static inline int common_prefix_length(const char *a, const char *b) {
         NSLog(@"Actual:\n%@", [textStorage string]);
     }
     HFASSERT([comparisonString isEqualToString:[textStorage string]]);
-    [comparisonString release];
 #endif
     
     storedLineIndex = startingLineIndex;
@@ -447,15 +430,12 @@ static inline int common_prefix_length(const char *a, const char *b) {
         [mutableStyle setMinimumLineHeight:lineHeight];
         [mutableStyle setMaximumLineHeight:lineHeight];
         NSParagraphStyle *paragraphStyle = [mutableStyle copy];
-        [mutableStyle release];
         textAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:font, NSFontAttributeName, [NSColor colorWithCalibratedWhite:(CGFloat).1 alpha:(CGFloat).8], NSForegroundColorAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
-        [paragraphStyle release];
     }    
     
     
     NSString *string = [self newLineStringForRange:HFRangeMake(lineIndex, linesRemaining)];
     [string drawInRect:textRect withAttributes:textAttributes];
-    [string release];
 }
 
 - (void)drawLineNumbersWithClipSingleStringCellDrawing:(NSRect)clipRect {
@@ -478,21 +458,16 @@ static inline int common_prefix_length(const char *a, const char *b) {
         [mutableStyle setMinimumLineHeight:lineHeight];
         [mutableStyle setMaximumLineHeight:lineHeight];
         NSParagraphStyle *paragraphStyle = [mutableStyle copy];
-        [mutableStyle release];
         textAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:font, NSFontAttributeName, [NSColor colorWithCalibratedWhite:(CGFloat).1 alpha:(CGFloat).8], NSForegroundColorAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
-        [paragraphStyle release];
     }
     
     NSString *string = [self newLineStringForRange:HFRangeMake(lineIndex, linesRemaining)];
     NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:string attributes:textAttributes];
-    [string release];
     NSCell *cell = [[NSCell alloc] initTextCell:@""];
     [cell setAttributedStringValue:attributedString];
     [cell drawWithFrame:textRect inView:nil];
     [[NSColor purpleColor] set];
     NSFrameRect(textRect);
-    [cell release];
-    [attributedString release];
 }
 
 - (void)drawLineNumbersWithClipFullLayoutManager:(NSRect)clipRect {
@@ -587,10 +562,8 @@ static inline int common_prefix_length(const char *a, const char *b) {
 
 - (void)setFont:(NSFont *)val {
     if (val != font) {
-        [font release];
-        font = [val retain];
+        font = val;
         [textStorage deleteCharactersInRange:NSMakeRange(0, [textStorage length])]; //delete the characters so we know to set the font next time we render
-        [textAttributes release];
         textAttributes = nil;
         storedLineCount = INVALID_LINE_COUNT;
         useStringDrawingPath = [self canUseStringDrawingPathForFont:font];

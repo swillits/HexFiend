@@ -21,7 +21,6 @@
     struct HFProcessInfo_t info = {0};
     BOOL success = [[self connection] getInfo:&info forProcess:pid];
     if (! success || ! info.bits) {
-        [self release];
         return nil;
     }
     unsigned long long length;
@@ -58,12 +57,12 @@
     HFASSERT(HFMaxRange(range) <= memoryRange.length);
     if (range.length == memoryRange.length) return self;
     HFRange newMemoryRange = HFRangeMake(HFSum(range.location, memoryRange.location), range.length);
-    return [[[[self class] alloc] initWithPID:processIdentifier range:newMemoryRange] autorelease];
+    return [[[self class] alloc] initWithPID:processIdentifier range:newMemoryRange];
 }
 
 - (HFByteRangeAttributeArray *)attributesForBytesInRange:(HFRange)range {
     HFRange remainingRange = range;
-    HFByteRangeAttributeArray *attributeArray = [[[HFByteRangeAttributeArray alloc] init] autorelease];
+    HFByteRangeAttributeArray *attributeArray = [[HFByteRangeAttributeArray alloc] init];
     while (remainingRange.length > 0) {
         NSError *error = nil;
         unsigned long long runLength = 0;

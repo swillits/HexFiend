@@ -25,7 +25,7 @@
 @property(nonatomic) NSInteger byteOffset;
 @property(nonatomic, copy) NSColor *color;
 @property(nonatomic, copy) NSString *label;
-@property(nonatomic, retain) id representedObject;
+@property(nonatomic, strong) id representedObject;
 @property(readonly) NSRect rect;
 
 + (void)layoutCallouts:(NSArray *)callouts inView:(HFRepresenterTextView *)textView;

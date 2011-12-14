@@ -26,7 +26,7 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
     REQUIRE_NOT_NULL(array);
     REQUIRE_NOT_NULL(types);
     self = [super init];
-    byteArray = [array retain];
+    byteArray = array;
     pasteboard = pboard;
     [pasteboard declareTypes:types owner:self];
     
@@ -37,7 +37,7 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
 }
 
 + ownPasteboard:(NSPasteboard *)pboard forByteArray:(HFByteArray *)array withTypes:(NSArray *)types {
-    return [[[self alloc] initWithPasteboard:pboard forByteArray:array withTypes:types] autorelease];
+    return [[self alloc] initWithPasteboard:pboard forByteArray:array withTypes:types];
 }
 
 - (void)tearDownPasteboardReferenceIfExists {
@@ -46,7 +46,7 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
         [[NSNotificationCenter defaultCenter] removeObserver:self name:HFPrepareForChangeInFileNotification object:nil];
     }
     if (retainedSelfOnBehalfOfPboard) {
-        CFRelease(self);
+        CFRelease((__bridge CFTypeRef)(self));
         retainedSelfOnBehalfOfPboard = NO;
     }
 }
@@ -57,7 +57,7 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
     if (byteArrayDictionary) {
         NSString *uuid = [byteArrayDictionary objectForKey:@"HFUUID"];
         if ([uuid isEqual:[self uuid]]) {
-            result = (HFByteArray *)[[byteArrayDictionary objectForKey:@"HFByteArray"] unsignedLongValue];
+            result = (__bridge HFByteArray *)(void *)[[byteArrayDictionary objectForKey:@"HFByteArray"] unsignedLongValue];
         }
     }
     return result;
@@ -109,8 +109,6 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
 
 - (void)dealloc {
     [self tearDownPasteboardReferenceIfExists];
-    [byteArray release];
-    [super dealloc];
 }
 
 - (void)moveDataToPasteboardWithProgressReporting:(SEL)commandToPerform userInfo:(id)userInfo {
@@ -119,7 +117,6 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
     typedef void (*FuncPtr_t)(id, SEL, id, id);
     const FuncPtr_t func = (FuncPtr_t)objc_msgSend;
     func(self, commandToPerform, userInfo, tracker);
-    [tracker release];
 }
 
 - (void)writeDataInBackgroundToPasteboard:(NSPasteboard *)pboard ofLength:(unsigned long long)length forType:(NSString *)type trackingProgress:(HFProgressTracker *)tracker {
@@ -131,10 +128,10 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
 }
 
 - (void)backgroundMoveDataToPasteboard:(NSString *)type {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    [self writeDataInBackgroundToPasteboard:pasteboard ofLength:dataAmountToCopy forType:type trackingProgress:progressTracker];
-    [self performSelectorOnMainThread:@selector(backgroundMoveDataFinished:) withObject:nil waitUntilDone:NO];
-    [pool drain];
+    @autoreleasepool {
+        [self writeDataInBackgroundToPasteboard:pasteboard ofLength:dataAmountToCopy forType:type trackingProgress:progressTracker];
+        [self performSelectorOnMainThread:@selector(backgroundMoveDataFinished:) withObject:nil waitUntilDone:NO];
+    }
 }
 
 - (void)backgroundMoveDataFinished:unused {
@@ -166,7 +163,7 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
 - (BOOL)moveDataWithProgressReportingToPasteboard:(NSPasteboard *)pboard forType:(NSString *)type {
     HFASSERT(pboard == pasteboard);
     BOOL result = NO;
-    [self retain]; //resolving the pasteboard may release us, which deallocates us, which deallocates our tracker...make sure we survive through this function
+     //resolving the pasteboard may release us, which deallocates us, which deallocates our tracker...make sure we survive through this function
     progressTracker = [[HFProgressTracker alloc] init];
     /* Give the user a chance to request a smaller amount if it's really big */
     unsigned long long availableAmount = [byteArray length];
@@ -189,13 +186,10 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
         }
         [progressTracker endTrackingProgress];
         [progressTrackingWindow close];
-        [progressTrackingWindow release];
         progressTrackingWindow = nil;
         result = ! progressTracker->cancelRequested;
-        [progressTracker release];
         progressTracker = nil;
     }
-    [self release];
     return result;
 }
 
@@ -221,7 +215,7 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
     if ([type isEqualToString:HFPrivateByteArrayPboardType]) {
         if (! retainedSelfOnBehalfOfPboard) {
             retainedSelfOnBehalfOfPboard = YES;
-            CFRetain(self);
+            CFRetain((__bridge CFTypeRef)(self));
         }
         NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:
                               [NSNumber numberWithUnsignedLong:(unsigned long)byteArray], @"HFByteArray",
@@ -243,7 +237,7 @@ NSString *const HFPrivateByteArrayPboardType = @"HFPrivateByteArrayPboardType";
     static NSString *uuid;
     if (! uuid) {
         CFUUIDRef uuidRef = CFUUIDCreate(NULL);
-        uuid = (NSString *)CFUUIDCreateString(NULL, uuidRef);
+        uuid = (__bridge_transfer NSString *)CFUUIDCreateString(NULL, uuidRef);
         CFRelease(uuidRef);
     }
     return uuid;

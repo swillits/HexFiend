@@ -40,8 +40,6 @@
     if ([self isViewLoaded]) {
         [[self view] clearRepresenter];
     }
-    [rowBackgroundColors release];
-    [super dealloc];
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
@@ -55,7 +53,7 @@
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     behavesAsTextField = [coder decodeBoolForKey:@"HFBehavesAsTextField"];
-    rowBackgroundColors = [[coder decodeObjectForKey:@"HFRowBackgroundColors"] retain];
+    rowBackgroundColors = [coder decodeObjectForKey:@"HFRowBackgroundColors"];
     return self;
 }
 
@@ -134,7 +132,7 @@
 }
 
 - (HFTextVisualStyleRun *)styleForAttributes:(NSSet *)attributes range:(NSRange)range {
-    HFTextVisualStyleRun *run = [[[HFTextVisualStyleRun alloc] init] autorelease];
+    HFTextVisualStyleRun *run = [[HFTextVisualStyleRun alloc] init];
     [run setRange:range];
     if ([attributes containsObject:kHFAttributeMagic]) {
         [run setForegroundColor:[NSColor blueColor]];
@@ -177,7 +175,6 @@
     
     if (bookmarkExtents) {
         [run setBookmarkExtents:bookmarkExtents];
-        [bookmarkExtents release];
     }
     return run;
 }
@@ -290,7 +287,7 @@
     HFRange displayedRange = [self entireDisplayedRange];
     
     HFASSERT(displayedRange.length <= NSUIntegerMax);
-    NEW_ARRAY(NSValue *, clippedSelectedRanges, [selectedRanges count]);
+    NSMutableArray *clippedSelectedRanges = [[NSMutableArray alloc] initWithCapacity:[selectedRanges count]];
     NSUInteger clippedRangeIndex = 0;
     FOREACH(HFRangeWrapper *, wrapper, selectedRanges) {
         HFRange selectedRange = [wrapper HFRange];
@@ -316,10 +313,9 @@
                 clippedSelectedRange.length = ll2l(intersectionRange.length);
             }
         }
-        if (clippedRangeIsVisible) clippedSelectedRanges[clippedRangeIndex++] = [NSValue valueWithRange:clippedSelectedRange];
+        if (clippedRangeIsVisible) [clippedSelectedRanges addObject:[NSValue valueWithRange:clippedSelectedRange]];
     }
-    result = [NSArray arrayWithObjects:clippedSelectedRanges count:clippedRangeIndex];
-    FREE_ARRAY(clippedSelectedRanges);
+    result = [clippedSelectedRanges copy];
     return result;
 }
 
@@ -350,8 +346,6 @@
             NSNumber *key = [[NSNumber alloc] initWithUnsignedInteger:mark];
             NSNumber *value = [[NSNumber alloc] initWithInteger:(long)(bookmarkRange.location - displayedRange.location)];
             [result setObject:value forKey:key];
-            [key release];
-            [value release];
         }
     }
     return result;
@@ -447,7 +441,6 @@
 
 - (void)setRowBackgroundColors:(NSArray *)colors {
     if (colors != rowBackgroundColors) {
-        [rowBackgroundColors release];
         rowBackgroundColors = [colors copy];
     }
 }

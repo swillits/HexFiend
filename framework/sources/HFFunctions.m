@@ -25,7 +25,6 @@ NSImage *HFImageNamed(NSString *name) {
             image = [[NSImage alloc] initByReferencingFile:imagePath];
             if (image == nil || ! [image isValid]) {
                 NSLog(@"Couldn't load image at path %@", imagePath);
-                [image release];
                 image = nil;
             }
             else {
@@ -44,17 +43,16 @@ NSImage *HFImageNamed(NSString *name) {
 + (HFRangeWrapper *)withRange:(HFRange)range {
     HFRangeWrapper *result = [[self alloc] init];
     result->range = range;
-    return [result autorelease];
+    return result;
 }
 
 + (NSArray *)withRanges:(const HFRange *)ranges count:(NSUInteger)count {
     HFASSERT(count == 0 || ranges != NULL);
     NSUInteger i;
     NSArray *result;
-    NEW_ARRAY(HFRangeWrapper *, wrappers, count);
-    for (i=0; i < count; i++) wrappers[i] = [self withRange:ranges[i]];
-    result = [NSArray arrayWithObjects:wrappers count:count];
-    FREE_ARRAY(wrappers);
+    NSMutableArray *wrappers = [[NSMutableArray alloc] initWithCapacity:count];
+    for (i=0; i < count; i++) [wrappers addObject:[self withRange:ranges[i]]];
+    result = [wrappers copy];
     return result;
 }
 
@@ -69,7 +67,7 @@ NSImage *HFImageNamed(NSString *name) {
 
 - (id)copyWithZone:(NSZone *)zone {
     USE(zone);
-    return [self retain];
+    return self;
 }
 
 - (NSString *)description {
@@ -479,7 +477,7 @@ NSString *HFHexStringFromData(NSData *data) {
         charBuffer[charIndex++] = hex2char(byte >> 4);
         charBuffer[charIndex++] = hex2char(byte & 0xF);
     }
-    return [[[NSString alloc] initWithBytesNoCopy:charBuffer length:stringLength encoding:NSASCIIStringEncoding freeWhenDone:YES] autorelease];
+    return [[NSString alloc] initWithBytesNoCopy:charBuffer length:stringLength encoding:NSASCIIStringEncoding freeWhenDone:YES];
 }
 
 void HFSetFDShouldCache(int fd, BOOL shouldCache) {
@@ -614,7 +612,7 @@ NSString *HFDescribeByteCountWithPrefixAndSuffix(const char *stringPrefix, unsig
     char* resultPointer = NULL;
     int numChars = asprintf(&resultPointer, "%s%llu%s %s%s%s", stringPrefix, dividend, remainderBuff, suffixes[i].suffix, "s" + !needsPlural, stringSuffix);
     if (numChars < 0) return NULL;
-    return [[[NSString alloc] initWithBytesNoCopy:resultPointer length:numChars encoding:NSASCIIStringEncoding freeWhenDone:YES] autorelease];
+    return [[NSString alloc] initWithBytesNoCopy:resultPointer length:numChars encoding:NSASCIIStringEncoding freeWhenDone:YES];
 }
 
 static CGFloat interpolateShadow(CGFloat val) {
@@ -669,6 +667,36 @@ void HFUnregisterViewForWindowAppearanceChanges(NSView *self, BOOL appToo) {
         [center removeObserver:self name:NSApplicationDidResignActiveNotification object:nil];
     }    
 }
+
+@implementation HFRectsAndProperties
+
+- (void)ensureCapacity:(size_t)val {
+    if (val <= capacity) return;
+    size_t oldCapacity = capacity;
+    capacity = val;
+    
+    // if this fails, we should crash, so don't do any error checking (hah)
+    // rects aren't objects, so it's OK to leave garbage in the yet-to-be-used capacity
+    rects = realloc(rects, val * sizeof *rects);
+    
+    // we don't want retains or releases, so use memcpy. This feels sketchy, but at least it's centralized here.
+    __unsafe_unretained id *localProperties = (__unsafe_unretained id *)realloc(properties, val * sizeof *localProperties);
+    //zero out everything except the first capacity value, so that when we write into them, ARC doesn't try to release the old garbage value and crash.
+    bzero(localProperties + oldCapacity, (capacity - oldCapacity) * sizeof *localProperties);
+    properties = (__strong id*)(void *)localProperties;
+}
+
+- (void)dealloc {
+    // release our objects. Use capacity, rather than count, because our callers like to put stuff in after count
+    size_t i = capacity;
+    while (i--) {
+        properties[i] = nil;
+    }
+    free(properties);
+    free(rects);
+}
+
+@end
 
 #if USE_CHUD
 void HFStartTiming(const char *name) {

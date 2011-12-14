@@ -12,26 +12,18 @@
 
 - init {
     self = [super init];
-    graph = (__strong CFMutableDictionaryRef)CFMakeCollectable(CFDictionaryCreateMutable(NULL, 0, NULL, &kCFTypeDictionaryValueCallBacks));
-    containedObjects = [[NSMutableArray alloc] init]; //containedObjects is necessary to make sure that our key objects are strongly referenced, since we use a NULL-callback dictionary
+    graph = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality valueOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality capacity:0];
     return self;
 }
 
-- (void)dealloc {
-    CFRelease(graph);
-    [containedObjects release];
-    [super dealloc];
-}
 
 - (void)addDependency:depend forObject:obj {
     REQUIRE_NOT_NULL(depend);
     REQUIRE_NOT_NULL(obj);
-    NSMutableSet *dependencies = (NSMutableSet *)CFDictionaryGetValue(graph, obj);
+    NSMutableSet *dependencies = [graph objectForKey:obj];
     if (! dependencies) {
         dependencies = [[NSMutableSet alloc] init];
-        CFDictionarySetValue(graph, obj, dependencies);
-        [dependencies release];
-        [containedObjects addObject:obj];
+        [graph setObject:dependencies forKey:obj];
     }
     [dependencies addObject:depend];
 }
@@ -40,25 +32,26 @@
     REQUIRE_NOT_NULL(depend);
     REQUIRE_NOT_NULL(obj);
     BOOL result = NO;
-    NSMutableSet *dependencies = (NSMutableSet *)CFDictionaryGetValue(graph, obj);
+    NSMutableSet *dependencies = [graph objectForKey:obj];
     result = [dependencies containsObject:depend];
     return result;
 }
 
 - (NSSet *)dependenciesForObject:obj {
     REQUIRE_NOT_NULL(obj);
-    return (NSSet *)CFDictionaryGetValue(graph, obj);
+    return [graph objectForKey:obj];
 }
 
-static void tarjan(HFObjectGraph *self, id node, CFMutableDictionaryRef vIndexes, CFMutableDictionaryRef vLowlinks, NSMutableArray *stack, NSUInteger *index, id givenDependencies/*NSSet or NSArray*/, NSMutableArray *resultStronglyConnectedComponents) {
+static void tarjan(HFObjectGraph *self, const void *node, CFMutableDictionaryRef vIndexes, CFMutableDictionaryRef vLowlinks, NSMutableArray *stack, NSUInteger *index, id givenDependencies/*NSSet or NSArray*/, NSMutableArray *resultStronglyConnectedComponents) {
     NSUInteger vLowlink = *index;
     CFDictionarySetValue(vIndexes, node, (void *)*index);
     CFDictionarySetValue(vLowlinks, node, (void *)vLowlink);
     ++*index;
-    [stack addObject:node];
+    [stack addObject:(__bridge id)node];
     
-    id dependencies = (givenDependencies ? givenDependencies : [self dependenciesForObject:node]);
-    FOREACH(id, successor, dependencies) {
+    id dependencies = (givenDependencies ? givenDependencies : [self dependenciesForObject:(__bridge id)node]);
+    FOREACH(id, successorObj, dependencies) {
+        void *successor = (__bridge void *)successorObj;
         NSUInteger successorIndex = -1;
         BOOL successorIndexIsDefined = CFDictionaryGetValueIfPresent(vIndexes, successor, (const void **)&successorIndex);
         if (! successorIndexIsDefined) {
@@ -70,7 +63,7 @@ static void tarjan(HFObjectGraph *self, id node, CFMutableDictionaryRef vIndexes
                 CFDictionarySetValue(vLowlinks, node, (void *)vLowlink);
             }
         }
-        else if ([stack indexOfObjectIdenticalTo:successor] != NSNotFound) {
+        else if ([stack indexOfObjectIdenticalTo:successorObj] != NSNotFound) {
             if (successorIndex < vLowlink) {
                 vLowlink = successorIndex;
                 CFDictionarySetValue(vLowlinks, node, (void *)vLowlink);
@@ -86,9 +79,8 @@ static void tarjan(HFObjectGraph *self, id node, CFMutableDictionaryRef vIndexes
             someNode = [stack lastObject];
             [component addObject:someNode];
             [stack removeLastObject];
-        } while (someNode != node);
+        } while (someNode != (__bridge id)node);
         [resultStronglyConnectedComponents addObject:component];
-        [component release];
     }
 }
 
@@ -99,30 +91,28 @@ static void tarjan(HFObjectGraph *self, id node, CFMutableDictionaryRef vIndexes
     CFMutableDictionaryRef vIndexes = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
     CFMutableDictionaryRef vLowlinks = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
     id magicStartNode = [[NSString alloc] initWithCString:"Magic Start Node" encoding:NSASCIIStringEncoding];
-    tarjan(self, magicStartNode, vIndexes, vLowlinks, stack, &index, objects, result);
+    tarjan(self, (__bridge const void *)magicStartNode, vIndexes, vLowlinks, stack, &index, objects, result);
     
     /* Remove the one array containing magicStartNode */
     HFASSERT([[result lastObject] count] == 1 && [[result lastObject] objectAtIndex:0] == magicStartNode);
     [result removeLastObject];
     
-    [magicStartNode release];
     CFRelease(vIndexes);
     CFRelease(vLowlinks);
-    [stack release];
     return result;
 }
 
-static void topologicallySort(HFObjectGraph *self, id object, NSMutableArray *result, CFMutableSetRef pending, CFMutableSetRef visited) {
+static void topologicallySort(HFObjectGraph *self, const void *object, NSMutableArray *result, CFMutableSetRef pending, CFMutableSetRef visited) {
     REQUIRE_NOT_NULL(object);
     HFASSERT(! CFSetContainsValue(pending, object));
     HFASSERT(! CFSetContainsValue(visited, object));
     HFASSERT((CFIndex)[result count] == CFSetGetCount(visited));
-    NSSet *dependencies = [self dependenciesForObject:object];
+    NSSet *dependencies = [self dependenciesForObject:(__bridge id)object];
     NSUInteger i, dependencyCount = [dependencies count];
     if (dependencyCount > 0) {
         CFSetAddValue(pending, object);
-        NEW_ARRAY(id, dependencyArray, dependencyCount);
-        CFSetGetValues((CFSetRef)dependencies, (const void **)dependencyArray);
+        NEW_ARRAY(const void *, dependencyArray, dependencyCount);
+        CFSetGetValues((__bridge CFSetRef)dependencies, dependencyArray);
         for (i=0; i < dependencyCount; i++) {
             HFASSERT(!CFSetContainsValue(pending, dependencyArray[i]));
             if (! CFSetContainsValue(visited, dependencyArray[i])) {
@@ -135,7 +125,7 @@ static void topologicallySort(HFObjectGraph *self, id object, NSMutableArray *re
         HFASSERT(CFSetContainsValue(pending, object));
         CFSetRemoveValue(pending, object);
     }
-    [result addObject:object];
+    [result addObject:(__bridge id)object];
     CFSetAddValue(visited, object);
 }
 
@@ -147,7 +137,7 @@ static void topologicallySort(HFObjectGraph *self, id object, NSMutableArray *re
     CFMutableSetRef visitedSet = CFSetCreateMutable(NULL, count, NULL);
     CFMutableSetRef pendingSet = CFSetCreateMutable(NULL, count, NULL);
     FOREACH(id, object, objects) {
-        topologicallySort(self, object, result, pendingSet, visitedSet);
+        topologicallySort(self, (__bridge void *)object, result, pendingSet, visitedSet);
     }
     CFRelease(visitedSet);
     CFRelease(pendingSet);

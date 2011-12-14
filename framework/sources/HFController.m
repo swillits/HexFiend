@@ -105,19 +105,9 @@ static inline Class preferredByteArrayClass(void) {
 
 - (void)dealloc {
     [representers makeObjectsPerformSelector:@selector(_setController:) withObject:nil];
-    [representers release];
-    [selectedContentsRanges release];
     [self _removeUndoManagerNotifications];
     [self _removeAllUndoOperations];
-    [undoOperations release];
-    [undoManager release];
-    [undoCoalescer release];
-    [font release];
     [byteArray removeObserver:self forKeyPath:@"changesAreLocked"];
-    [byteArray release];
-    [cachedData release];
-    [additionalPendingTransactions release];
-    [super dealloc];
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
@@ -139,13 +129,13 @@ static inline Class preferredByteArrayClass(void) {
     [self _sharedInit];
     bytesPerLine = (NSUInteger)[coder decodeInt64ForKey:@"HFBytesPerLine"];
     bytesPerColumn = (NSUInteger)[coder decodeInt64ForKey:@"HFBytesPerColumn"];
-    font = [[coder decodeObjectForKey:@"HFFont"] retain];
+    font = [coder decodeObjectForKey:@"HFFont"];
     lineHeight = (CGFloat)[coder decodeDoubleForKey:@"HFLineHeight"];
     _hfflags.antialias = [coder decodeBoolForKey:@"HFAntialias"];
     _hfflags.overwriteMode = [coder decodeBoolForKey:@"HFOverwriteMode"];
     _hfflags.editable = [coder decodeBoolForKey:@"HFEditable"];
     _hfflags.selectable = [coder decodeBoolForKey:@"HFSelectable"];
-    representers = [[coder decodeObjectForKey:@"HFRepresenters"] retain];
+    representers = [coder decodeObjectForKey:@"HFRepresenters"];
     return self;
 }
 
@@ -165,9 +155,7 @@ static inline Class preferredByteArrayClass(void) {
     NSNumber *number = [[NSNumber alloc] initWithUnsignedInt:bits];
 #endif
     NSDictionary *userInfo = [[NSDictionary alloc] initWithObjects:&number forKeys:(id *)&HFControllerChangedPropertiesKey count:1];
-    [number release];
     [[NSNotificationCenter defaultCenter] postNotificationName:HFControllerDidChangePropertiesNotification object:self userInfo:userInfo];
-    [userInfo release];
 }
 
 - (void)_firePropertyChanges {
@@ -188,7 +176,6 @@ static inline Class preferredByteArrayClass(void) {
             HFASSERT(propertiesInThisTransaction != 0);
             [self notifyRepresentersOfChanges:propertiesInThisTransaction];
         }
-        [pendingTransactions release];
         if (propertiesToUpdate) {
             [self notifyRepresentersOfChanges:propertiesToUpdate];
         }
@@ -302,12 +289,10 @@ static inline Class preferredByteArrayClass(void) {
     if (val != font) {
         CGFloat priorLineHeight = [self lineHeight];
         
-        [font release];
         font = [val copy];
         
         NSLayoutManager *manager = [[NSLayoutManager alloc] init];
         lineHeight = [manager defaultLineHeightForFont:font];
-        [manager release];
         
         HFControllerPropertyBits bits = HFControllerFont;
         if (lineHeight != priorLineHeight) bits |= HFControllerLineHeight;
@@ -462,7 +447,6 @@ static inline Class preferredByteArrayClass(void) {
     
     NSUInteger newGenerationIndex = [byteArray changeGenerationCount];
     if (cachedData == nil || newGenerationIndex != cachedGenerationIndex || ! HFRangeIsSubrangeOfRange(range, cachedRange)) {
-        [cachedData release];
         cachedGenerationIndex = newGenerationIndex;
         cachedRange = range;
         NSUInteger length = ll2l(range.length);
@@ -712,17 +696,13 @@ static inline Class preferredByteArrayClass(void) {
         [self _addPropertyChangeBits:HFControllerSelectedRanges];
     }
     
-    [newTempSelection release];
 }
 
 - (void)setByteArray:(HFByteArray *)val {
     REQUIRE_NOT_NULL(val);
     BEGIN_TRANSACTION();
     [byteArray removeObserver:self forKeyPath:@"changesAreLocked"];
-    [val retain];
-    [byteArray release];
     byteArray = val;
-    [cachedData release];
     cachedData = nil;
     [byteArray addObserver:self forKeyPath:@"changesAreLocked" options:0 context:KVOContextChangesAreLocked];
     [self _updateDisplayedRange];
@@ -739,11 +719,9 @@ static inline Class preferredByteArrayClass(void) {
     /* We expect to only be called with an undo operation we know about (i.e. is in our set) */
     HFASSERT(undoOperations != nil);
     HFASSERT([undoOperations containsObject:undoer]);
-    [undoer retain];
     [undoOperations removeObject:undoer];
     [self _commandInsertByteArrays:[undoer byteArrays] inRanges:[undoer replacementRanges] withSelectionAction:[undoer selectionAction]];
     [undoer invalidate];
-    [undoer release];
 }
 
 - (void)_registerUndoOperationForInsertingByteArrays:(NSArray *)byteArrays inRanges:(NSArray *)ranges withSelectionAction:(SelectionAction_t)selectionAction {
@@ -752,7 +730,6 @@ static inline Class preferredByteArrayClass(void) {
         HFASSERT(undoOperations != nil);
         [undoOperations addObject:undoer];
         [undoManager registerUndoWithTarget:self selector:@selector(_performMultiRangeUndo:) object:undoer];
-        [undoer release];
     }
 }
 
@@ -785,8 +762,6 @@ static inline Class preferredByteArrayClass(void) {
 - (void)setUndoManager:(NSUndoManager *)manager {
     [self _removeUndoManagerNotifications];
     [self _removeAllUndoOperations];
-    [manager retain];
-    [undoManager release];
     undoManager = manager;
     [self _addUndoManagerNotifications];
 }
@@ -1095,7 +1070,6 @@ static inline Class preferredByteArrayClass(void) {
     [self _addPropertyChangeBits:HFControllerSelectionPulseAmount];
     if (pulseSelectionCurrentTime - pulseSelectionStartTime > kPulseDuration) {
         [pulseSelectionTimer invalidate];
-        [pulseSelectionTimer release];
         pulseSelectionTimer = nil;
     }
 }
@@ -1103,7 +1077,7 @@ static inline Class preferredByteArrayClass(void) {
 - (void)pulseSelection {
     pulseSelectionStartTime = CFAbsoluteTimeGetCurrent();
     if (pulseSelectionTimer == nil) {
-        pulseSelectionTimer = [[NSTimer scheduledTimerWithTimeInterval:(1. / 30.) target:self selector:@selector(firePulseTimer:) userInfo:nil repeats:YES] retain];
+        pulseSelectionTimer = [NSTimer scheduledTimerWithTimeInterval:(1. / 30.) target:self selector:@selector(firePulseTimer:) userInfo:nil repeats:YES];
     }
 }
 
@@ -1334,7 +1308,7 @@ static inline Class preferredByteArrayClass(void) {
         hasAddedNonemptyRange = hasAddedNonemptyRange || (range.length > 0);
     }
     
-    newRanges = [[[HFRangeWrapper organizeAndMergeRanges:newRanges] mutableCopy] autorelease];
+    newRanges = [[HFRangeWrapper organizeAndMergeRanges:newRanges] mutableCopy];
     
     BOOL hasFoundEmptyRange = NO;
     max = [newRanges count];
@@ -1517,7 +1491,6 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
 }
 
 - (void)_endTypingUndoCoalescingIfActive {
-    [undoCoalescer release];
     undoCoalescer = nil;
 }
 
@@ -1527,7 +1500,6 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
     /* We expect to only be called with an undo operation we know about (i.e. is in our set).  Remove it from the set. */
     HFASSERT(undoOperations != nil);
     HFASSERT([undoOperations containsObject:undoer]);
-    [undoer retain];
     [undoOperations removeObject:undoer];    
     
     BEGIN_TRANSACTION();
@@ -1562,12 +1534,10 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
     END_TRANSACTION();
     
     [undoer invalidate];
-    [undoer release];
 }
 
 - (void)_beginNewUndoCoalescingWithData:(HFByteArray *)data isOverwriting:(BOOL)overwrite atAnchorLocation:(unsigned long long)anchorLocation {
     /* Replace our current undo coalescer */
-    [undoCoalescer release];
     if (overwrite) {
         undoCoalescer = [[HFControllerCoalescedUndo alloc] initWithOverwrittenData:data atAnchorLocation:anchorLocation];
     } else {
@@ -1752,8 +1722,6 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
     [array insertByteSlice:slice inRange:HFRangeMake(0, 0)];
     HFASSERT([array length] == [data length]);
     result = [self insertByteArray:array replacingPreviousBytes:previousBytes allowUndoCoalescing:allowUndoCoalescing];
-    [slice release];
-    [array release];
 #if ! NDEBUG
     HFASSERT((result && [byteArray length] == expectedNewLength) || (! result && [byteArray length] == startLength));
 #endif
@@ -1960,10 +1928,7 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
         NSMutableDictionary *hint = [[NSMutableDictionary alloc] init];
         NSDictionary *userInfo = [[NSDictionary alloc] initWithObjectsAndKeys:array, HFChangeInFileByteArrayKey, changedRanges, HFChangeInFileModifiedRangesKey, shouldCancelPointer, HFChangeInFileShouldCancelKey, hint, HFChangeInFileHintKey, nil];
         [[NSNotificationCenter defaultCenter] postNotificationName:HFPrepareForChangeInFileNotification object:fileReference userInfo:userInfo];
-        [hint release];
-        [userInfo release];
     }
-    [fileReference release];
     return ! shouldCancel;
 }
 

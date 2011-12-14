@@ -19,10 +19,6 @@
     return self;
 }
 
-- (void)dealloc {
-    [data release];
-    [super dealloc];
-}
 
 - (unsigned long long)length {
     return [data length];
@@ -44,11 +40,11 @@
     range.length = ll2l(lrange.length);
     HFFullMemoryByteArray* result = [[[self class] alloc] init];
     [result->data setData:[data subdataWithRange:range]];
-    return [result autorelease];
+    return result;
 }
 
 - (NSArray *)byteSlices {
-    return [NSArray arrayWithObject:[[[HFFullMemoryByteSlice alloc] initWithData:data] autorelease]];
+    return [NSArray arrayWithObject:[[HFFullMemoryByteSlice alloc] initWithData:data]];
 }
 
 - (void)insertByteSlice:(HFByteSlice *)slice inRange:(HFRange)lrange {

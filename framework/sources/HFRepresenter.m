@@ -31,10 +31,6 @@
     return self;
 }
 
-- (void)dealloc {
-    [view release];
-    [super dealloc];
-}
 
 - (void)encodeWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
@@ -48,7 +44,7 @@
     self = [super init];
     layoutPosition = [coder decodePointForKey:@"HFLayoutPosition"];   
     controller = [coder decodeObjectForKey:@"HFController"]; // not retained
-    view = [[coder decodeObjectForKey:@"HFRepresenterView"] retain];
+    view = [coder decodeObjectForKey:@"HFRepresenterView"];
     return self;
 }
 

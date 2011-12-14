@@ -276,11 +276,8 @@ static BOOL validate_instructions(const struct HFEditInstruction_t *insns, size_
 BYTEARRAY_RELEASE_INLINE
 void append_snake_to_instructions(HFByteArrayEditScript *self, unsigned long long srcOffset, unsigned long long dstOffset, unsigned long long snakeLength) {
     HFASSERT(snakeLength > 0);
-    void * const selfP = self; //no need to retain self in the block
     
     dispatch_async(self->insnQueue, ^{
-        HFByteArrayEditScript * const self = selfP;
-        
         /* Bail if we cancelled */
         if (*self->cancelRequested) return;
         
@@ -1362,8 +1359,8 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     self = [super init];
     NSParameterAssert(src != nil);
     NSParameterAssert(dst != nil);
-    source = [src retain];
-    destination = [dst retain];
+    source = src;
+    destination = dst;
     sourceLength = [source length];
     destLength = [destination length];
     return self;
@@ -1382,7 +1379,6 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     
     /* Remember our progress tracker (if any) */
     if (tracker) {
-        [tracker retain];
         
         /* Tell our progress tracker how much work to expect.  Here we treat the amount of work as the sum of the horizontal and vertical.  Note: this product may overflow!  Ugh! */
         [tracker setMaxProgress: sourceLength * destLength];
@@ -1401,7 +1397,6 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     
     cancelRequested = NULL;
     currentProgress = NULL;
-    [tracker release];
     
     CFAbsoluteTime end = CFAbsoluteTimeGetCurrent();
     
@@ -1415,17 +1410,13 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     BOOL success = [self computeDifferencesTrackingProgress:progressTracker];
     if (! success) {
         /* Cancelled */
-        [self release];
         self = nil;
     }    
     return self;
 }
 
 - (void)dealloc {
-    [source release];
-    [destination release];
     free(insns);
-    [super dealloc];
 }
 
 - (void)applyToByteArray:(HFByteArray *)target {

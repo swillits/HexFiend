@@ -22,10 +22,8 @@
     if (mutableData) {
         HFSharedMemoryByteSlice *byteSlice = [[HFSharedMemoryByteSlice alloc] initWithData:mutableData];
         [byteArray insertByteSlice:byteSlice inRange:HFRangeMake(0, 0)];
-        [byteSlice release];
     }
     [dataController setByteArray:byteArray];
-    [byteArray release];
 }
 
 - (void)_HFControllerDidChangeProperties:(NSNotification *)note {
@@ -39,7 +37,6 @@
         /* Note that this isn't quite right.  If we don't have any cached data, then we can't provide the "before" data for this change.  In practice, this is likely harmless, but it's still something that should be fixed at some point.
         */
         [self willChangeValueForKey:@"data"];
-        [cachedData release];
         cachedData = nil; //set this to nil so that it gets recomputed on demand
         [self didChangeValueForKey:@"data"];
     }
@@ -70,9 +67,9 @@
 - (id)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
-    dataController = [[coder decodeObjectForKey:@"HFController"] retain];
-    layoutRepresenter = [[coder decodeObjectForKey:@"HFLayoutRepresenter"] retain];
-    backgroundColors = [[coder decodeObjectForKey:@"HFBackgroundColors"] retain];
+    dataController = [coder decodeObjectForKey:@"HFController"];
+    layoutRepresenter = [coder decodeObjectForKey:@"HFLayoutRepresenter"];
+    backgroundColors = [coder decodeObjectForKey:@"HFBackgroundColors"];
     bordered = [coder decodeBoolForKey:@"HFBordered"];
     NSMutableData *byteArrayData = [coder decodeObjectForKey:@"HFByteArrayMutableData"]; //may be nil
     [self _sharedInitHFTextViewWithMutableData:byteArrayData];
@@ -96,7 +93,6 @@
         if (byteArrayData) {
             [byteArray copyBytes:[byteArrayData mutableBytes] range:HFRangeMake(0, byteArrayLength)];
             [coder encodeObject:byteArrayData forKey:@"HFByteArrayMutableData"];
-            [byteArrayData release];
         }
     }
 }
@@ -110,11 +106,11 @@
     layoutRepresenter = [[HFLayoutRepresenter alloc] init];
     [dataController addRepresenter:layoutRepresenter];
     
-    HFHexTextRepresenter *hexRep = [[[HFHexTextRepresenter alloc] init] autorelease];
+    HFHexTextRepresenter *hexRep = [[HFHexTextRepresenter alloc] init];
     [(NSView *)[hexRep view] setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable]; //by default make the hex view fill remaining space
     
-    HFStringEncodingTextRepresenter *textRep = [[[HFStringEncodingTextRepresenter alloc] init] autorelease];
-    HFVerticalScrollerRepresenter *scrollRep = [[[HFVerticalScrollerRepresenter alloc] init] autorelease];
+    HFStringEncodingTextRepresenter *textRep = [[HFStringEncodingTextRepresenter alloc] init];
+    HFVerticalScrollerRepresenter *scrollRep = [[HFVerticalScrollerRepresenter alloc] init];
 
     [dataController addRepresenter:hexRep];
     [dataController addRepresenter:textRep];
@@ -144,10 +140,9 @@
     /* Remove the old view and representer */
     NSView *oldLayoutView = [layoutRepresenter view];
     [oldLayoutView removeFromSuperview];
-    [layoutRepresenter release];
     
     /* Install the new view and representer */
-    layoutRepresenter = [val retain];
+    layoutRepresenter = val;
     NSView *newLayoutView = [layoutRepresenter view];
     [newLayoutView setFrame:[self _desiredFrameForLayoutView]];
     [self addSubview:newLayoutView];
@@ -160,8 +155,7 @@
 - (void)setController:(HFController *)controller {
     if (controller == dataController) return;
     [[NSNotificationCenter defaultCenter] removeObserver:self name:HFControllerDidChangePropertiesNotification object:dataController];
-    [dataController release];
-    dataController = [controller retain];
+    dataController = controller;
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_HFControllerDidChangeProperties:) name:HFControllerDidChangePropertiesNotification object:dataController];
 }
 
@@ -175,7 +169,6 @@
 
 - (void)setBackgroundColors:(NSArray *)colors {
     if (colors != backgroundColors) {
-        [backgroundColors release];
         backgroundColors = [colors copy];
         id rep;
         NSEnumerator *enumer = [[[self controller] representers] objectEnumerator];
@@ -225,7 +218,6 @@
     if (! cachedData) {
         HFByteArray *copiedArray = [[dataController byteArray] copy];
         cachedData = [[HFByteArrayProxiedData alloc] initWithByteArray:copiedArray];
-        [copiedArray release];
     }
     return cachedData;
 }
@@ -233,26 +225,18 @@
 - (void)setData:(NSData *)data {
     if ([data length] == 0 && [cachedData length] == 0) return; //prevent an infinite regress where someone tries to set a nil data on us
     if (data == nil || data != cachedData) {
-        [cachedData release];
         cachedData = [data copy];
         HFByteArray *newArray = [[HFBTreeByteArray alloc] init];
         if (cachedData) {
             HFByteSlice *newSlice = [[HFFullMemoryByteSlice alloc] initWithData:cachedData];
             [newArray insertByteSlice:newSlice inRange:HFRangeMake(0, 0)];
-            [newSlice release];
         }
         [dataController replaceByteArray:newArray];
-        [newArray release];
     }
 }
 
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:HFControllerDidChangePropertiesNotification object:dataController];
-    [dataController release];
-    [layoutRepresenter release];
-    [backgroundColors release];
-    [cachedData release];
-    [super dealloc];
 }
 
 + (void)initialize {

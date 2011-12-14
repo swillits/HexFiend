@@ -46,7 +46,6 @@
     else {
 	NSString *string = [[NSString alloc] initWithBytesNoCopy:stringBuffer length:stringLength encoding:encoding freeWhenDone:YES];
 	[pboard setString:string forType:type];
-	[string release];
     }
 }
 

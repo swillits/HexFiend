@@ -55,7 +55,6 @@ static unsigned char hex2char(NSUInteger c) {
     else {
 	NSString *string = [[NSString alloc] initWithBytesNoCopy:stringBuffer length:stringLength - MIN(stringLength, 1) encoding:NSASCIIStringEncoding freeWhenDone:YES];
 	[pboard setString:string forType:type];
-	[string release];
     }
 }
 

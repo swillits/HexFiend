@@ -56,3 +56,19 @@ static inline int64_t HFAtomicAdd64(int64_t a, volatile int64_t *b) {
     return OSAtomicAdd64(a, b);
 #endif
 }
+
+/*! @brief A wrapper for an array of properties and values.
+
+   A simple class that responsible for holding a parallel array of rects and values.
+*/
+@interface HFRectsAndProperties : NSObject {
+@public
+    NSRect *rects;
+    __strong id *properties;
+    size_t count;
+    size_t capacity;
+}
+
+- (void)ensureCapacity:(size_t)val;
+
+@end

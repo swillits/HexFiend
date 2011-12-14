@@ -25,8 +25,6 @@
 }
 
 - (void)setImage:(NSImage *)val {
-    [val retain];
-    [image release];
     image = val;
     [self setNeedsDisplay:YES];
 }

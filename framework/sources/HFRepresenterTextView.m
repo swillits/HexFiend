@@ -25,7 +25,7 @@ static const CGFloat HFTeardropRadius = 12;
     HFASSERT(length <= sizeof chars / sizeof *chars);
     HFASSERT(inputFont != nil);
     [string getCharacters:chars range:NSMakeRange(0, length)];
-    if (! CTFontGetGlyphsForCharacters((CTFontRef)inputFont, chars, glyphs, length)) {
+    if (! CTFontGetGlyphsForCharacters((__bridge CTFontRef)inputFont, chars, glyphs, length)) {
         /* Some or all characters were not mapped.  This is OK.  We'll use the replacement glyph. */
     }
     return length;
@@ -173,7 +173,7 @@ static const CGFloat HFTeardropRadius = 12;
     BOOL hasCaretTimer = !! caretTimer;
     BOOL shouldHaveCaretTimer = treatAsHavingFirstResponder && [self _shouldHaveCaretTimer];
     if (shouldHaveCaretTimer == YES && hasCaretTimer == NO) {
-        caretTimer = [[NSTimer timerWithTimeInterval:HFCaretBlinkFrequency target:self selector:@selector(_blinkCaret:) userInfo:nil repeats:YES] retain];
+        caretTimer = [NSTimer timerWithTimeInterval:HFCaretBlinkFrequency target:self selector:@selector(_blinkCaret:) userInfo:nil repeats:YES];
         NSRunLoop *loop = [NSRunLoop currentRunLoop];
         [loop addTimer:caretTimer forMode:NSDefaultRunLoopMode];
         [loop addTimer:caretTimer forMode:NSModalPanelRunLoopMode];
@@ -183,7 +183,6 @@ static const CGFloat HFTeardropRadius = 12;
     }
     else if (shouldHaveCaretTimer == NO && hasCaretTimer == YES) {
         [caretTimer invalidate];
-        [caretTimer release];
         caretTimer = nil;
         caretRectToDraw = NSZeroRect;
         if (! NSIsEmptyRect(lastDrawnCaretRect)) {
@@ -201,7 +200,6 @@ static const CGFloat HFTeardropRadius = 12;
 - (void)_forceCaretOnIfHasCaretTimer {
     if (caretTimer) {
         [caretTimer invalidate];
-        [caretTimer release];
         caretTimer = nil;
         [self _updateCaretTimer];
         
@@ -397,7 +395,7 @@ enum LineCoverage_t {
     }
     
     if (lastCaretRectNeedsRedraw) [self setNeedsDisplayInRect:lastDrawnCaretRect];
-    [oldSelectedRanges release]; //balance the retain we borrowed from the ivar
+     //balance the retain we borrowed from the ivar
     [self _updateCaretTimer];
     [self _forceCaretOnIfHasCaretTimer];
 }
@@ -410,7 +408,6 @@ enum LineCoverage_t {
         [[NSBezierPath bezierPathWithRoundedRect:pulseRect xRadius:25 yRadius:25] addClip];
         NSGradient *gradient = [[NSGradient alloc] initWithStartingColor:[NSColor yellowColor] endingColor:[NSColor colorWithCalibratedRed:(CGFloat)1. green:(CGFloat).75 blue:0 alpha:1]];
         [gradient drawInRect:pulseRect angle:90];
-        [gradient release];
         CGContextRestoreGState(ctx);
     }
     else {
@@ -474,7 +471,6 @@ enum LineCoverage_t {
                 [pulseWindow setOpaque:NO];
                 HFTextSelectionPulseView *pulseView = [[HFTextSelectionPulseView alloc] initWithFrame:[[pulseWindow contentView] frame]];
                 [pulseWindow setContentView:pulseView];
-                [pulseView release];
                 
                 /* Render our image at 200% of its current size */
                 const CGFloat imageScale = 2;
@@ -494,7 +490,6 @@ enum LineCoverage_t {
                 [self drawTextWithClip:windowFrameInBoundsCoords restrictingToTextInRanges:ranges];
                 [image unlockFocus];
                 [pulseView setImage:image];
-                [image release];
                 
                 if (thisWindow) {
                     [thisWindow addChildWindow:pulseWindow ordered:NSWindowAbove];
@@ -578,7 +573,7 @@ enum LineCoverage_t {
 - (void)pulseSelection {
     pulseStartTime = CFAbsoluteTimeGetCurrent();
     if (! pulseTimer) {
-        pulseTimer = [[NSTimer scheduledTimerWithTimeInterval:(1. / 30.) target:self selector:@selector(pulseSelectionTimer:) userInfo:nil repeats:YES] retain];
+        pulseTimer = [NSTimer scheduledTimerWithTimeInterval:(1. / 30.) target:self selector:@selector(pulseSelectionTimer:) userInfo:nil repeats:YES];
     }
 }
 
@@ -649,14 +644,14 @@ enum LineCoverage_t {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     representer = [coder decodeObjectForKey:@"HFRepresenter"];
-    font = [[coder decodeObjectForKey:@"HFFont"] retain];
-    data = [[coder decodeObjectForKey:@"HFData"] retain];
+    font = [coder decodeObjectForKey:@"HFFont"];
+    data = [coder decodeObjectForKey:@"HFData"];
     verticalOffset = (CGFloat)[coder decodeDoubleForKey:@"HFVerticalOffset"];
     horizontalContainerInset = (CGFloat)[coder decodeDoubleForKey:@"HFHorizontalContainerOffset"];
     defaultLineHeight = (CGFloat)[coder decodeDoubleForKey:@"HFDefaultLineHeight"];
     bytesBetweenVerticalGuides = (NSUInteger)[coder decodeInt64ForKey:@"HFBytesBetweenVerticalGuides"];
     startingLineBackgroundColorIndex = (NSUInteger)[coder decodeInt64ForKey:@"HFStartingLineBackgroundColorIndex"];
-    rowBackgroundColors = [[coder decodeObjectForKey:@"HFRowBackgroundColors"] retain];
+    rowBackgroundColors = [coder decodeObjectForKey:@"HFRowBackgroundColors"];
     _hftvflags.antialias = [coder decodeBoolForKey:@"HFAntialias"];
     _hftvflags.editable = [coder decodeBoolForKey:@"HFEditable"];
     return self;
@@ -681,11 +676,9 @@ enum LineCoverage_t {
 
 - (void)setFont:(NSFont *)val {
     if (val != font) {
-        [font release];
-        font = [val retain];
+        font = val;
         NSLayoutManager *manager = [[NSLayoutManager alloc] init];
         defaultLineHeight = [manager defaultLineHeightForFont:font];
-        [manager release];
         [self setNeedsDisplay:YES];
     }
 }
@@ -765,7 +758,6 @@ enum LineCoverage_t {
                 [self setNeedsDisplayForLinesInRange:NSMakeRange(firstLine, lastDifferingLine - firstLine)];
             }
         }
-        [data release];
         data = [val copy];
         [self _updateCaretTimer];
     }
@@ -800,7 +792,6 @@ enum LineCoverage_t {
         }
         
         /* Don't need this any more */
-        [changedStyles release];
         
         /* Expand to cover all touched characters */
         NSUInteger bytesPerCharacter = [self bytesPerCharacter];
@@ -816,8 +807,7 @@ enum LineCoverage_t {
         }
         
         /* Do the usual Cocoa thing */
-        [styles release];
-        styles = [newStyles retain];
+        styles = newStyles;
     }
 }
 
@@ -851,13 +841,6 @@ enum LineCoverage_t {
 - (void)dealloc {
     HFUnregisterViewForWindowAppearanceChanges(self, _hftvflags.registeredForAppNotifications /* appToo */);
     [caretTimer invalidate];
-    [caretTimer release];
-    [font release];
-    [data release];
-    [styles release];
-    [cachedSelectedRanges release];
-    [callouts release];
-    [super dealloc];
 }
 
 - (NSColor *)backgroundColorForEmptySpace {
@@ -893,12 +876,13 @@ enum LineCoverage_t {
     lineRect.origin.y -= [self verticalOffset] * [self lineHeight];
     NSUInteger drawableLineIndex = 0;
     NEW_ARRAY(NSRect, lineRects, maxLines);
-    NEW_ARRAY(NSColor*, lineColors, maxLines);
+    NEW_ARRAY(__unsafe_unretained NSColor *, lineColors, maxLines);
     for (lineIndex = 0; lineIndex < maxLines; lineIndex++) {
         NSRect clippedLineRect = NSIntersectionRect(lineRect, clip);
         if (! NSIsEmptyRect(clippedLineRect)) {
             NSColor *lineColor = [self backgroundColorForLine:lineIndex];
             if (lineColor) {
+                CFBridgingRetain(lineColor);
                 lineColors[drawableLineIndex] = lineColor;
                 lineRects[drawableLineIndex] = clippedLineRect;
                 drawableLineIndex++;
@@ -909,6 +893,10 @@ enum LineCoverage_t {
     
     if (drawableLineIndex > 0) {
         NSRectFillListWithColorsUsingOperation(lineRects, lineColors, drawableLineIndex, NSCompositeSourceOver);
+        
+        while (drawableLineIndex--) {
+            CFRelease((__bridge CFTypeRef)lineColors[drawableLineIndex]);
+        }
     }
     
     FREE_ARRAY(lineRects);
@@ -927,7 +915,7 @@ enum LineCoverage_t {
 }
 
 /* Given a list of rects and a parallel list of values, find cases of equal adjacent values, and union together their corresponding rects, deleting the second element from the list.  Next, delete all nil values.  Returns the new count of the list. */
-static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) {
+static size_t unionAndCleanLists(NSRect *rectList, __strong id *valueList, size_t count) {
     size_t trailing = 0, leading = 0;
     while (leading < count) {
         /* Copy our value left */
@@ -966,7 +954,7 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
             trailing += 1;
         }
     }
-    count = trailing;    
+    count = trailing;
     
     /* All done */
     return count;
@@ -1039,7 +1027,6 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
         [path appendBezierPathWithOvalInRect:NSMakeRect(rect.origin.x, rect.origin.y, 6, 6)];
         [path appendBezierPathWithRect:NSMakeRect(rect.origin.x, rect.origin.y, 2, defaultLineHeight)];
         [path fill];
-        [path release];
         NSRectFill(NSMakeRect(rect.origin.x, NSMaxY(rect) - 1, rect.size.width, (CGFloat).75));
     }
     [NSGraphicsContext restoreGraphicsState];
@@ -1064,7 +1051,6 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
         if (needsClip) {
             [context restoreGraphicsState];
         }
-        [path release];
         
         i++;
         ovalRect.origin.y += ovalRect.size.height;
@@ -1135,7 +1121,6 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
         if (needsClip) {
             [context restoreGraphicsState];
         }
-        [path release];
         
         i++;
         ovalRect.origin.y += ovalRect.size.height;
@@ -1153,17 +1138,14 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
     const NSUInteger bytesPerColumn = [self _effectiveBytesPerColumn];
     
     /* Here are the properties we care about */
-    struct PropertyInfo_t {
-        SEL stylePropertyAccessor; // the selector we use to get the property
-        NSRect *rectList; // the list of rects corresponding to the property values
-        id *propertyValueList; // the list of the property values
-        size_t count; //list count, only gets set after cleaning up our lists
-    } propertyInfos[] = {
-        {.stylePropertyAccessor = @selector(backgroundColor)},
-        {.stylePropertyAccessor = @selector(bookmarkStarts)},
-        {.stylePropertyAccessor = @selector(bookmarkExtents)},
-        {.stylePropertyAccessor = @selector(bookmarkEnds)}
-    };
+#define kPropertyCount 4
+    SEL stylePropertyAccessors[kPropertyCount] = {
+        @selector(backgroundColor),
+        @selector(bookmarkStarts),
+        @selector(bookmarkExtents),
+        @selector(bookmarkEnds)
+    };    
+    HFRectsAndProperties *propertyInfos[kPropertyCount] = {};
     
     /* Each list has the same capacity, and (initially) the same count */
     size_t i, listCount = 0, listCapacity = 0;
@@ -1172,7 +1154,12 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
     id (* const funcPtr)(id, SEL) = (id (*)(id, SEL))objc_msgSend;
     
     size_t propertyIndex;
-    const size_t propertyInfoCount = sizeof propertyInfos / sizeof *propertyInfos;
+    const size_t propertyInfoCount = kPropertyCount;
+    
+    /* Create our propertyInfos */
+    for (i=0; i < kPropertyCount; i++) {
+        propertyInfos[i] = [[HFRectsAndProperties alloc] init];
+    }
     
     while (remainingRange.length > 0) {
         /* Get the next run for the remaining range. */
@@ -1202,18 +1189,18 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
             listCapacity = listCapacity + 16;
             
             for (propertyIndex = 0; propertyIndex < propertyInfoCount; propertyIndex++) {
-                struct PropertyInfo_t *p = propertyInfos + propertyIndex;
-                p->rectList = check_realloc(p->rectList, listCapacity * sizeof *p->rectList);
-                p->propertyValueList = check_realloc(p->propertyValueList, listCapacity * sizeof *p->propertyValueList);
+                [propertyInfos[propertyIndex] ensureCapacity:listCapacity];
             }
         }
         
         /* Now append our values to our lists, even if it's nil */
         for (propertyIndex = 0; propertyIndex < propertyInfoCount; propertyIndex++) {
-            struct PropertyInfo_t *p = propertyInfos + propertyIndex;
-            id value = funcPtr(styleRun, p->stylePropertyAccessor);
-            p->rectList[listCount] = runRect;
-            p->propertyValueList[listCount] = value;
+            HFRectsAndProperties *propertyInfo = propertyInfos[propertyIndex];
+            HFASSERT(propertyInfo->count == listCount);
+            id value = funcPtr(styleRun, stylePropertyAccessors[propertyIndex]);
+            propertyInfo->rects[listCount] = runRect;
+            propertyInfo->properties[listCount] = value;
+            propertyInfo->count = listCount + 1;
         }
         
         listCount++;
@@ -1226,33 +1213,33 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
     
     /* Now clean up our lists, to delete the gaps we may have introduced */
     for (propertyIndex = 0; propertyIndex < propertyInfoCount; propertyIndex++) {
-        struct PropertyInfo_t *p = propertyInfos + propertyIndex;
-        p->count = unionAndCleanLists(p->rectList, p->propertyValueList, listCount);
+        HFRectsAndProperties *propertyInfo = propertyInfos[propertyIndex];
+        HFASSERT(propertyInfo->count == listCount);
+        propertyInfo->count = unionAndCleanLists(propertyInfo->rects, propertyInfo->properties, propertyInfo->count);
     }
     
     /* Finally we can draw them! */
-    const struct PropertyInfo_t *p;
+    HFRectsAndProperties *p;
     
     /* Draw backgrounds */
-    p = propertyInfos + 0;
-    if (p->count > 0) NSRectFillListWithColorsUsingOperation(p->rectList, p->propertyValueList, p->count, NSCompositeSourceOver);
+    p = propertyInfos[0];
+    if (p->count > 0) NSRectFillListWithColorsUsingOperation(p->rects, p->properties, p->count, NSCompositeSourceOver);
     
     /* Draw bookmark starts, extents, and ends */
-    p = propertyInfos + 1;
-    for (i=0; i < p->count; i++) [self drawBookmarkStarts:p->propertyValueList[i] inRect:p->rectList[i]];
+    p = propertyInfos[1];
+    for (i=0; i < p->count; i++) [self drawBookmarkStarts:p->properties[i] inRect:p->rects[i]];
     
-    p = propertyInfos + 2;
-    for (i=0; i < p->count; i++) [self drawBookmarkExtents:p->propertyValueList[i] inRect:p->rectList[i]];
+    p = propertyInfos[2];
+    for (i=0; i < p->count; i++) [self drawBookmarkExtents:p->properties[i] inRect:p->rects[i]];
     
-    p = propertyInfos + 3;
-    for (i=0; i < p->count; i++) [self drawBookmarkEnds:p->propertyValueList[i] inRect:p->rectList[i]];
+    p = propertyInfos[3];
+    for (i=0; i < p->count; i++) [self drawBookmarkEnds:p->properties[i] inRect:p->rects[i]];
     
     /* Clean up */
-    for (propertyIndex = 0; propertyIndex < propertyInfoCount; propertyIndex++) {
-        struct PropertyInfo_t *p = propertyInfos + propertyIndex;
-        free(p->rectList);
-        free(p->propertyValueList);
-    }    
+    for (i=0; i < kPropertyCount; i++) {
+    }
+
+#undef kPropertyCount
 }
 
 - (void)drawGlyphs:(const struct HFGlyph_t *)glyphs atPoint:(NSPoint)point withAdvances:(const CGSize *)advances withStyleRun:(HFTextVisualStyleRun *)styleRun count:(NSUInteger)glyphCount {
@@ -1495,7 +1482,6 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
             [callout setLabel:[NSString stringWithFormat:@"%lu", [newKey unsignedIntegerValue]]];
             [callout setRepresentedObject:newKey];
             [callouts setObject:callout forKey:newKey];
-            [callout release];
         }
         NSInteger byteOffset = [[bookmarks objectForKey:newKey] integerValue];
         [callout setByteOffset:byteOffset];
@@ -1538,7 +1524,6 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
             [newCallout drawWithClip:clip];
         }
     }
-    [localCallouts release];
 }
 
 - (void)drawRect:(NSRect)clip {
@@ -1832,32 +1817,32 @@ static size_t unionAndCleanLists(NSRect *rectList, id *valueList, size_t count) 
     
     NSPoint autoscrollLocation = mouseDownLocation;
     while (! _hftvflags.receivedMouseUp) {
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-        NSEvent *event = [NSApp nextEventMatchingMask: NSLeftMouseUpMask | NSLeftMouseDraggedMask | NSPeriodicMask untilDate:endDate inMode:NSEventTrackingRunLoopMode dequeue:YES];
-        
-        if ([event type] == NSPeriodic) {
-            // autoscroll if drag is out of view bounds
-            CGFloat amountToScroll = 0;
-            NSRect bounds = [self bounds];
-            if (autoscrollLocation.y < NSMinY(bounds)) {
-                amountToScroll = (autoscrollLocation.y - NSMinY(bounds)) / [self lineHeight];
+        @autoreleasepool {
+            NSEvent *event = [NSApp nextEventMatchingMask: NSLeftMouseUpMask | NSLeftMouseDraggedMask | NSPeriodicMask untilDate:endDate inMode:NSEventTrackingRunLoopMode dequeue:YES];
+            
+            if ([event type] == NSPeriodic) {
+                // autoscroll if drag is out of view bounds
+                CGFloat amountToScroll = 0;
+                NSRect bounds = [self bounds];
+                if (autoscrollLocation.y < NSMinY(bounds)) {
+                    amountToScroll = (autoscrollLocation.y - NSMinY(bounds)) / [self lineHeight];
+                }
+                else if (autoscrollLocation.y > NSMaxY(bounds)) {
+                    amountToScroll = (autoscrollLocation.y - NSMaxY(bounds)) / [self lineHeight];
+                }
+                if (amountToScroll != 0.) {
+                    [[[self representer] controller] scrollByLines:amountToScroll];
+                    NSUInteger characterIndex = [self characterAtPointForSelection:autoscrollLocation];
+                    characterIndex = MIN(characterIndex, [self maximumCharacterIndex]);
+                    [[self representer] continueSelectionWithEvent:event forCharacterIndex:characterIndex];
+                }
             }
-            else if (autoscrollLocation.y > NSMaxY(bounds)) {
-                amountToScroll = (autoscrollLocation.y - NSMaxY(bounds)) / [self lineHeight];
+            else if ([event type] == NSLeftMouseDragged) {
+                autoscrollLocation = [self convertPoint:[event locationInWindow] fromView:nil];
             }
-            if (amountToScroll != 0.) {
-                [[[self representer] controller] scrollByLines:amountToScroll];
-                NSUInteger characterIndex = [self characterAtPointForSelection:autoscrollLocation];
-                characterIndex = MIN(characterIndex, [self maximumCharacterIndex]);
-                [[self representer] continueSelectionWithEvent:event forCharacterIndex:characterIndex];
-            }
+            
+            [NSApp sendEvent:event]; 
         }
-        else if ([event type] == NSLeftMouseDragged) {
-            autoscrollLocation = [self convertPoint:[event locationInWindow] fromView:nil];
-        }
-        
-        [NSApp sendEvent:event]; 
-        [pool drain];
     }
     
     [NSEvent stopPeriodicEvents];

@@ -37,11 +37,6 @@ static NSData *newDataFromByteArray(HFByteArray *array) {
     return self;
 }
 
-- (void)dealloc {
-    [byteArray release];
-    [serializedData release];
-    [super dealloc];
-}
 
 - (NSUInteger)length {
     return length;
@@ -50,8 +45,8 @@ static NSData *newDataFromByteArray(HFByteArray *array) {
 - (id)_copyRetainedBacking {
     id result = nil;
     @synchronized(self) {
-        if (serializedData) result = [serializedData retain];
-        else result = [byteArray retain];
+        if (serializedData) result = serializedData;
+        else result = byteArray;
     }
     return result;
     
@@ -69,13 +64,12 @@ static NSData *newDataFromByteArray(HFByteArray *array) {
         }
         resultingData = serializedData;
     }
-    [byteArrayToRelease release];
     return [resultingData bytes];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
     USE(zone);
-    return [self retain];
+    return self;
 }
 
 - (void)getBytes:(void *)buffer {
@@ -94,7 +88,6 @@ static NSData *newDataFromByteArray(HFByteArray *array) {
     else {
         [(NSData *)backing getBytes:buffer range:range];
     }
-    [backing release];
 }
 
 @end

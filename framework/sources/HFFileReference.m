@@ -154,7 +154,6 @@ static BOOL returnFTruncateError(NSError **error) {
     fileDescriptor = -1;
     if (! ([self initSharedWithPath:path error:error] && [self validateWithError:error])) {
         [self close];
-        [self release];
         self = nil;
     }
     return self;
@@ -166,7 +165,6 @@ static BOOL returnFTruncateError(NSError **error) {
     fileDescriptor = -1;
     if (! ([self initSharedWithPath:path error:error] && [self validateWithError:error])) {
         [self close];
-        [self release];
         self = nil;
     }
     return self;
@@ -179,7 +177,6 @@ static BOOL returnFTruncateError(NSError **error) {
 
 - (void)dealloc {
     [self close];
-    [super dealloc];
 }
 
 @end
