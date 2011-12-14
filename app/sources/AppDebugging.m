@@ -31,20 +31,15 @@
     [promptField setStringValue:promptText];
 }
 
-- (void)dealloc {
-    [promptText release];
-    [super dealloc];
-}
 
 + (NSString *)promptForValueWithText:(NSString *)text {
     NSString *textResult = nil;
     GenericPrompt *pmpt = [[self alloc] initWithPromptText:text];
     NSInteger modalResult = [NSApp runModalForWindow:[pmpt window]];
     if (modalResult == NSRunStoppedResponse) {
-        textResult = [[[pmpt->valueField stringValue] copy] autorelease];
+        textResult = [[pmpt->valueField stringValue] copy];
     }
     [pmpt close];
-    [pmpt release];
     return textResult;
     
 }
@@ -90,9 +85,7 @@ static NSString *promptForValue(NSString *promptText) {
     HFByteSlice *slice = [[clsHFRandomDataByteSlice alloc] initWithRandomDataLength:length];
     HFByteArray *array = [[HFBTreeByteArray alloc] init];
     [array insertByteSlice:slice inRange:HFRangeMake(0, 0)];
-    [slice release];
     [controller insertByteArray:array replacingPreviousBytes:0 allowUndoCoalescing:NO];
-    [array release];
 }
 
 - (void)_tweakByteArray:sender {
@@ -104,7 +97,7 @@ static NSString *promptForValue(NSString *promptText) {
     unsigned i;
     Class clsHFRandomDataByteSlice = NSClassFromString(@"HFRandomDataByteSlice");
     for (i=1; i <= tweakCount; i++) {
-	NSAutoreleasePool* pool=[[NSAutoreleasePool alloc] init];
+	@autoreleasepool {
 	NSUInteger op;
 	const unsigned long long length = [byteArray length];
 	unsigned long long offset;
@@ -114,7 +107,6 @@ static NSString *promptForValue(NSString *promptText) {
 		offset = random() % (1 + length);
 		HFByteSlice* slice = [[clsHFRandomDataByteSlice alloc] initWithRandomDataLength: 1 + random() % 1000];
 		[byteArray insertByteSlice:slice inRange:HFRangeMake(offset, 0)];
-		[slice release];
 		break;
 	    }
 	    case 1: { //delete
@@ -126,10 +118,9 @@ static NSString *promptForValue(NSString *promptText) {
 		break;
 	    }
 	}
-	[pool drain];
+	}
     }
     [controller replaceByteArray:byteArray];
-    [byteArray release];
 }
 
 @end

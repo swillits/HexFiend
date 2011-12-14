@@ -24,10 +24,6 @@
     }
 }
 
-- (void)dealloc {
-    [viewsToInitialFrames release];
-    [super dealloc];
-}
 
 typedef struct { CGFloat offset; CGFloat length; } Position_t;
 

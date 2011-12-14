@@ -474,10 +474,6 @@ static BOOL valueCanFitInByteCount(unsigned long long unsignedValue, NSUInteger 
     return self;
 }
 
-- (void)dealloc {
-    [inspectors release];
-    [super dealloc];
-}
 
 - (void)encodeWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
@@ -488,7 +484,7 @@ static BOOL valueCanFitInByteCount(unsigned long long unsignedValue, NSUInteger 
 - (id)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
-    inspectors = [[coder decodeObjectForKey:@"HFInspectors"] retain];
+    inspectors = [coder decodeObjectForKey:@"HFInspectors"];
     return self;
 }
 
@@ -497,7 +493,6 @@ static BOOL valueCanFitInByteCount(unsigned long long unsignedValue, NSUInteger 
     if (! defaultInspectorDictionaries) {
         DataInspector *ins = [[DataInspector alloc] init];
         [inspectors addObject:ins];
-        [ins release];
     }
     else {
         NSEnumerator *enumer = [defaultInspectorDictionaries objectEnumerator];
@@ -506,7 +501,6 @@ static BOOL valueCanFitInByteCount(unsigned long long unsignedValue, NSUInteger 
             DataInspector *ins = [[DataInspector alloc] init];
             [ins setPropertyListRepresentation:inspectorDictionary];
             [inspectors addObject:ins];
-            [ins release];            
         }
     }
 }
@@ -519,7 +513,6 @@ static BOOL valueCanFitInByteCount(unsigned long long unsignedValue, NSUInteger 
         [inspectorDictionaries addObject:[inspector propertyListRepresentation]];
     }
     [[NSUserDefaults standardUserDefaults] setObject:inspectorDictionaries forKey:kDataInspectorUserDefaultsKey];
-    [inspectorDictionaries release];
 }
 
 - (NSView *)createView {
@@ -569,8 +562,7 @@ static NSAttributedString *inspectionError(NSString *s) {
     NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [paragraphStyle setMinimumLineHeight:(CGFloat)16.];
     NSAttributedString *result = [[NSAttributedString alloc] initWithString:s attributes:[NSDictionary dictionaryWithObjectsAndKeys:[NSColor disabledControlTextColor], NSForegroundColorAttributeName, [NSFont controlContentFontOfSize:11], NSFontAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil]];
-    [paragraphStyle release];
-    return [result autorelease];
+    return result;
 }
 
 - (id)valueFromInspector:(DataInspector *)inspector isError:(BOOL *)outIsError{
@@ -589,10 +581,9 @@ static NSAttributedString *inspectionError(NSString *s) {
     }
     
     NSData *selection = [controller dataForRange:selectedRange];
-    [selection retain];
     const unsigned char *bytes = [selection bytes];
     id result = [inspector valueForBytes:bytes length:ll2l(selectedRange.length)];
-    [selection release]; //keep it alive for GC
+     //keep it alive for GC
     if (outIsError) *outIsError = NO;
     return result;
 }
@@ -643,7 +634,6 @@ static NSAttributedString *inspectionError(NSString *s) {
 		NSArray *selectedRanges = [controller selectedContentsRanges];
 		NSData *data = [[NSData alloc] initWithBytes:bytes length:byteCount];
 		[controller insertData:data replacingPreviousBytes:0 allowUndoCoalescing:NO];
-		[data release];
 		[controller setSelectedContentsRanges:selectedRanges]; //Hack to preserve the selection across the data insertion
 	    }
 	}
@@ -682,11 +672,9 @@ static NSAttributedString *inspectionError(NSString *s) {
 	BOOL wrapped = [ins incrementToNextType];
 	if (wrapped) break;
     }
-    [existingInspectors release];
     
     NSInteger clickedRow = [table clickedRow];
     [inspectors insertObject:ins atIndex:clickedRow + 1];
-    [ins release];
     [self saveDefaultInspectors];
     [self resizeTableViewAfterChangingRowCount];
 }

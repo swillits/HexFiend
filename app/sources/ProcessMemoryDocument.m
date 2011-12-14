@@ -15,9 +15,9 @@ static inline Class preferredByteArrayClass(void) {
 @implementation ProcessMemoryDocument
 
 - (void)openProcessWithPID:(pid_t)pid {
-    HFByteSlice *byteSlice = [[[HFProcessMemoryByteSlice alloc] initWithAddressSpaceOfPID:pid] autorelease];
+    HFByteSlice *byteSlice = [[HFProcessMemoryByteSlice alloc] initWithAddressSpaceOfPID:pid];
     if (byteSlice) {
-        HFByteArray *byteArray = [[[preferredByteArrayClass() alloc] init] autorelease];
+        HFByteArray *byteArray = [[preferredByteArrayClass() alloc] init];
         [byteArray insertByteSlice:byteSlice inRange:HFRangeMake(0, 0)];
         [controller setByteArray:byteArray];
     }

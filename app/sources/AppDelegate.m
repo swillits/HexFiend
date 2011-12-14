@@ -47,32 +47,31 @@ static NSComparisonResult compareFontDisplayNames(NSFont *a, NSFont *b, void *un
 
 - (void)buildFontMenu:unused {
     USE(unused);
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSFontManager *manager = [NSFontManager sharedFontManager];
-    NSCharacterSet *minimumRequiredCharacterSet;
-    NSMutableCharacterSet *minimumCharacterSetMutable = [[NSMutableCharacterSet alloc] init];
-    [minimumCharacterSetMutable addCharactersInRange:NSMakeRange('0', 10)];
-    [minimumCharacterSetMutable addCharactersInRange:NSMakeRange('a', 26)];
-    [minimumCharacterSetMutable addCharactersInRange:NSMakeRange('A', 26)];
-    minimumRequiredCharacterSet = [[minimumCharacterSetMutable copy] autorelease];
-    [minimumCharacterSetMutable release];
-    
-    NSMutableSet *fontNames = [NSMutableSet setWithArray:[manager availableFontNamesWithTraits:NSFixedPitchFontMask]];
-    [fontNames minusSet:[NSSet setWithArray:[manager availableFontNamesWithTraits:NSFixedPitchFontMask | NSBoldFontMask]]];
-    [fontNames minusSet:[NSSet setWithArray:[manager availableFontNamesWithTraits:NSFixedPitchFontMask | NSItalicFontMask]]];
-    NSMutableArray *fonts = [NSMutableArray arrayWithCapacity:[fontNames count]];
-    FOREACH(NSString *, fontName, fontNames) {
-        NSFont *font = [NSFont fontWithName:fontName size:0];
-        NSString *displayName = [font displayName];
-        if (! [displayName length]) continue;
-        unichar firstChar = [displayName characterAtIndex:0];
-        if (firstChar == '#' || firstChar == '.') continue;
-        if (! [[font coveredCharacterSet] isSupersetOfSet:minimumRequiredCharacterSet]) continue; //weed out some useless fonts, like Monotype Sorts
-        [fonts addObject:font];
+    @autoreleasepool {
+        NSFontManager *manager = [NSFontManager sharedFontManager];
+        NSCharacterSet *minimumRequiredCharacterSet;
+        NSMutableCharacterSet *minimumCharacterSetMutable = [[NSMutableCharacterSet alloc] init];
+        [minimumCharacterSetMutable addCharactersInRange:NSMakeRange('0', 10)];
+        [minimumCharacterSetMutable addCharactersInRange:NSMakeRange('a', 26)];
+        [minimumCharacterSetMutable addCharactersInRange:NSMakeRange('A', 26)];
+        minimumRequiredCharacterSet = [minimumCharacterSetMutable copy];
+        
+        NSMutableSet *fontNames = [NSMutableSet setWithArray:[manager availableFontNamesWithTraits:NSFixedPitchFontMask]];
+        [fontNames minusSet:[NSSet setWithArray:[manager availableFontNamesWithTraits:NSFixedPitchFontMask | NSBoldFontMask]]];
+        [fontNames minusSet:[NSSet setWithArray:[manager availableFontNamesWithTraits:NSFixedPitchFontMask | NSItalicFontMask]]];
+        NSMutableArray *fonts = [NSMutableArray arrayWithCapacity:[fontNames count]];
+        FOREACH(NSString *, fontName, fontNames) {
+            NSFont *font = [NSFont fontWithName:fontName size:0];
+            NSString *displayName = [font displayName];
+            if (! [displayName length]) continue;
+            unichar firstChar = [displayName characterAtIndex:0];
+            if (firstChar == '#' || firstChar == '.') continue;
+            if (! [[font coveredCharacterSet] isSupersetOfSet:minimumRequiredCharacterSet]) continue; //weed out some useless fonts, like Monotype Sorts
+            [fonts addObject:font];
+        }
+        [fonts sortUsingFunction:compareFontDisplayNames context:NULL];
+        [self performSelectorOnMainThread:@selector(receiveFonts:) withObject:fonts waitUntilDone:NO modes:[NSArray arrayWithObjects:NSDefaultRunLoopMode, NSEventTrackingRunLoopMode, nil]];
     }
-    [fonts sortUsingFunction:compareFontDisplayNames context:NULL];
-    [self performSelectorOnMainThread:@selector(receiveFonts:) withObject:fonts waitUntilDone:NO modes:[NSArray arrayWithObjects:NSDefaultRunLoopMode, NSEventTrackingRunLoopMode, nil]];
-    [pool drain];
 }
 
 - (void)receiveFonts:(NSArray *)fonts {
@@ -86,7 +85,6 @@ static NSComparisonResult compareFontDisplayNames(NSFont *a, NSFont *b, void *un
         [menu insertItem:item atIndex:itemIndex++];
         /* Validate the menu item in case the menu is currently open, so it gets the right check */
         [self validateMenuItem:item];
-        [item release];
     }
 }
 
@@ -158,7 +156,6 @@ static NSComparisonResult compareFontDisplayNames(NSFont *a, NSFont *b, void *un
     [[NSDocumentController sharedDocumentController] addDocument:doc];
     [doc makeWindowControllers];
     [doc showWindows];
-    [doc release];
 }
 
 - (void)menuNeedsUpdate:(NSMenu *)menu {

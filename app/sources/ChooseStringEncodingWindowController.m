@@ -16,8 +16,6 @@
     NSDictionary *attributes = [[NSDictionary alloc] initWithObjectsAndKeys:[NSColor blueColor], NSForegroundColorAttributeName, [NSNumber numberWithInt:NSUnderlineStyleSingle], NSUnderlineStyleAttributeName, [self font], NSFontAttributeName, nil];
     NSAttributedString *attributedTitle = [[NSAttributedString alloc] initWithString:title attributes:attributes];
     [self setAttributedTitle:attributedTitle];
-    [attributes release];
-    [attributedTitle release];
 }
 
 @end
@@ -91,8 +89,6 @@ static void addEncoding(NSString *name, CFStringEncoding value, NSMutableArray *
         [localKeys addObject:title];
         NSNumber *numberValue = [[NSNumber alloc] initWithInteger:cocoaEncoding];
         [localValues addObject:numberValue];
-        [numberValue release];
-        [title release];
     }
 }
 
@@ -253,14 +249,10 @@ static void addEncoding(NSString *name, CFStringEncoding value, NSMutableArray *
     
 #undef ENCODING
     
-    [keysToEncodings release];
     keysToEncodings = [[NSDictionary alloc] initWithObjects:localValues forKeys:localKeys];
     [encodingField removeAllItems];
     [encodingField addItemsWithObjectValues:localKeys];
     
-    [localKeys release];
-    [localValues release];
-    [usedKeys release];
 }
 
 - (void)windowDidLoad {
@@ -278,10 +270,6 @@ static void addEncoding(NSString *name, CFStringEncoding value, NSMutableArray *
     }
 }
 
-- (void)dealloc {
-    [keysToEncodings release];
-    [super dealloc];
-}
 
 
 @end

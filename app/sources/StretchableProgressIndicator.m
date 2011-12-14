@@ -97,9 +97,5 @@ static CGFloat norm(unsigned char x) {
     return self;
 }
 
-- (void)dealloc {
-    [gradient release];
-    [super dealloc];
-}
 
 @end

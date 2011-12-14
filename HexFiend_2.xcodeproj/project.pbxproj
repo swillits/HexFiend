@@ -1575,13 +1575,14 @@
 				"MACOSX_DEPLOYMENT_TARGET[arch=ppc64]" = 10.5;
 				SDKROOT = macosx;
 				"SDKROOT[arch=ppc64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
-				VALID_ARCHS = "armv6 armv7 i386 x86_64";
+				VALID_ARCHS = x86_64;
 			};
 			name = Release;
 		};
 		D0222569146F5D3900646C27 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1720,13 +1721,14 @@
 				"MACOSX_DEPLOYMENT_TARGET[arch=ppc64]" = 10.5;
 				SDKROOT = macosx;
 				"SDKROOT[arch=ppc64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
-				VALID_ARCHS = "armv6 armv7 i386 x86_64";
+				VALID_ARCHS = x86_64;
 			};
 			name = "Debug + Unit Tests";
 		};
 		D022259E146F629E00646C27 /* Debug + Unit Tests */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1865,13 +1867,14 @@
 				"MACOSX_DEPLOYMENT_TARGET[arch=ppc64]" = 10.5;
 				SDKROOT = macosx;
 				"SDKROOT[arch=ppc64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
-				VALID_ARCHS = "armv6 armv7 i386 x86_64";
+				VALID_ARCHS = x86_64;
 			};
 			name = "Release + Code Sign";
 		};
 		D039DC1214835A1400364FA6 /* Release + Code Sign */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2050,13 +2053,14 @@
 				"MACOSX_DEPLOYMENT_TARGET[arch=ppc64]" = 10.5;
 				SDKROOT = macosx;
 				"SDKROOT[arch=ppc64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
-				VALID_ARCHS = "armv6 armv7 i386 x86_64";
+				VALID_ARCHS = x86_64;
 			};
 			name = "Debug + Code Sign";
 		};
 		D075E205148196B00010D9AE /* Debug + Code Sign */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2195,7 +2199,7 @@
 				"MACOSX_DEPLOYMENT_TARGET[arch=ppc64]" = 10.5;
 				SDKROOT = macosx;
 				"SDKROOT[arch=ppc64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
-				VALID_ARCHS = "armv6 armv7 i386 x86_64";
+				VALID_ARCHS = x86_64;
 			};
 			name = Debug;
 		};
@@ -2235,6 +2239,7 @@
 		D083F7370DBCBD5F00C2B632 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",

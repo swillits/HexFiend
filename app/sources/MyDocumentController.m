@@ -59,7 +59,6 @@
             [doc adoptWindowController:controller fromTransientDocument:transientDoc];
         }
         [transientDoc close];
-        [controllersToTransfer release];
         
     } else {
         [self performSelectorOnMainThread:_cmd withObject:documents waitUntilDone:YES];

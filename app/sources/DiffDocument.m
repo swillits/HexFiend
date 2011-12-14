@@ -290,13 +290,7 @@ static enum DiffOverlayViewRangeType_t rangeTypeForValue(CGFloat value) {
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:HFControllerDidChangePropertiesNotification object:[rightTextView controller]];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:HFControllerDidChangePropertiesNotification object:[leftTextView controller]];
-    [leftBytes release];
-    [rightBytes release];
-    [leftFileName release];
-    [rightFileName release];
     [diffComputationView removeObserver:self forKeyPath:@"progress"];
-    [diffComputationView release];
-    [super dealloc];
 }
 
 /* Diff documents never show a divider */
@@ -481,7 +475,6 @@ static enum DiffOverlayViewRangeType_t rangeTypeForValue(CGFloat value) {
     
     /* Now apply them */
     if ([correspondingRanges count] > 0) [dstController setSelectedContentsRanges:correspondingRanges];
-    [correspondingRanges release];
 }
 
 - (void)synchronizeControllers:(NSNotification *)note {
@@ -601,7 +594,6 @@ static enum DiffOverlayViewRangeType_t rangeTypeForValue(CGFloat value) {
         HFLineCountingRepresenter *lineCounter = [[HFLineCountingRepresenter alloc] init];
         [[leftTextView controller] addRepresenter:lineCounter];
         [[leftTextView layoutRepresenter] addRepresenter:lineCounter];
-        [lineCounter release];	
     }
     
     /* It's not editable */
@@ -620,7 +612,7 @@ static enum DiffOverlayViewRangeType_t rangeTypeForValue(CGFloat value) {
     [leftBytes incrementChangeLockCounter];
     [rightBytes incrementChangeLockCounter];
     [diffComputationView startOperation:^id(HFProgressTracker *tracker) {
-        return [[[HFByteArrayEditScript alloc] initWithDifferenceFromSource:leftBytes toDestination:rightBytes trackingProgress:tracker] autorelease];
+        return [[HFByteArrayEditScript alloc] initWithDifferenceFromSource:leftBytes toDestination:rightBytes trackingProgress:tracker];
     } completionHandler:^(id script) {
         [leftBytes decrementChangeLockCounter];
         [rightBytes decrementChangeLockCounter];
@@ -633,7 +625,7 @@ static enum DiffOverlayViewRangeType_t rangeTypeForValue(CGFloat value) {
             /* Hide the script banner */
             if (operationView != nil && operationView == diffComputationView) [self hideBannerFirstThenDo:NULL];
             
-            editScript = [script retain];
+            editScript = script;
             [self showInstructionsFromEditScript];	
         }
     }];
@@ -685,7 +677,6 @@ static enum DiffOverlayViewRangeType_t rangeTypeForValue(CGFloat value) {
     [overlayView setLeftView:leftTextView];
     [overlayView setRightView:rightTextView];
     [[window contentView] addSubview:overlayView];
-    [overlayView release];
     
     /* Update our window size so it's the right size for our data */
     NSRect windowFrame = [window frame];
@@ -710,7 +701,6 @@ static enum DiffOverlayViewRangeType_t rangeTypeForValue(CGFloat value) {
 
 - (void)setLeftFileName:(NSString *)val {
     if (val != leftFileName) {
-        [leftFileName release];
         leftFileName = [val copy];
     }
 }
@@ -721,7 +711,6 @@ static enum DiffOverlayViewRangeType_t rangeTypeForValue(CGFloat value) {
 
 - (void)setRightFileName:(NSString *)val {
     if (val != rightFileName) {
-        [rightFileName release];
         rightFileName = [val copy];
     }    
 }

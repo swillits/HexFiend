@@ -32,7 +32,6 @@ static NSString *sNibName;
     if (! [NSBundle loadNibFile:path externalNameTable:[NSDictionary dictionaryWithObjectsAndKeys:topLevelObjects, @"NSTopLevelObjects", owner, @"NSOwner", nil] withZone:NULL]) {
         [NSException raise:NSInvalidArgumentException format:@"Unable to load nib at path %@", path];
     }
-    [sNibName release];
     sNibName = nil;
     HFDocumentOperationView *resultObject = nil;
     NSMutableArray *otherObjects = nil;
@@ -58,7 +57,6 @@ static NSString *sNibName;
 
 - (void)setOtherTopLevelObjects:(NSArray *)objects {
     objects = [objects copy];
-    [otherTopLevelObjects release];
     otherTopLevelObjects = objects;
 }
 
@@ -73,7 +71,6 @@ static NSString *sNibName;
 
 - (void)setDisplayName:(NSString *)name {
     name = [name copy];
-    [displayName release];
     displayName = name;
 }
 
@@ -86,12 +83,6 @@ static NSString *sNibName;
     return self;
 }
 
-- (void)dealloc {
-    [otherTopLevelObjects release];
-    [nibName release];
-    [displayName release];
-    [super dealloc];
-}
 
 static NSView *searchForViewWithIdentifier(NSView *view, NSString *identifier) {
     /* Maybe this view is it */
@@ -169,17 +160,13 @@ static NSView *searchForViewWithIdentifier(NSView *view, NSString *identifier) {
     [progressIndicator setHidden:YES];
     dispatch_group_wait(waitGroup, DISPATCH_TIME_FOREVER);
     completionHandler(threadResult);
-    [(id)threadResult release];
-    [tracker release];
     tracker = nil;
     [self willChangeValueForKey:@"operationIsRunning"];
     dispatch_release(waitGroup);
     waitGroup = NULL;
     [self didChangeValueForKey:@"operationIsRunning"];
     [cancelButton setHidden: ! [self operationIsRunning]];
-    [tracker release];
     tracker = nil;
-    [self release];
 }
 
 - (void)progressTrackerDidFinish:(HFProgressTracker *)track {
@@ -230,12 +217,11 @@ static NSView *searchForViewWithIdentifier(NSView *view, NSString *identifier) {
     [tracker setProgressIndicator:progressIndicator];
     [tracker beginTrackingProgress];
     
-    [self retain];
     [self willChangeValueForKey:@"operationIsRunning"];
     waitGroup = dispatch_group_create();
     dispatch_group_async(waitGroup, dispatch_get_global_queue(0, 0), ^{
         @autoreleasepool {
-            threadResult = [startBlock(tracker) retain];
+            threadResult = startBlock(tracker);
             [tracker noteFinished:self];
         }
     });

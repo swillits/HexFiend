@@ -17,16 +17,12 @@
 }
 
 - (void)setFindField:(HFTextField *)field {
-    [field retain];
-    [findField release];
     findField = field;
     [findField setUsesHexArea: ! fieldTypeIsASCII];
     [findField setUsesTextArea: fieldTypeIsASCII];
 }
 
 - (void)setReplaceField:(HFTextField *)field {
-    [field retain];
-    [replaceField release];
     replaceField = field;
     [replaceField setUsesHexArea: ! fieldTypeIsASCII];
     [replaceField setUsesTextArea: fieldTypeIsASCII];
@@ -116,7 +112,6 @@
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self removeObserver:self forKeyPath:@"operationIsRunning"];
-    [super dealloc];
 }
 
 @end
