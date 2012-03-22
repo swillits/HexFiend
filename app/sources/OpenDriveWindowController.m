@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 #include <objc/message.h>
 
-void * refSelf;
+id refSelf;
 
 static inline BOOL isRunningOnLeopardOrLater(void) {
     return NSAppKitVersionNumber >= 949;
@@ -45,8 +45,7 @@ enum {
 	
     NSString * temp = [col identifier];
     NSDictionary * tempDrive = (NSDictionary*)[driveList objectAtIndex:rowIndex];
-    NSString * returnString = 0;
-    [returnString autorelease];
+    NSString *returnString = NULL;
     if([temp isEqualToString:@"BSD Name"])
     {
         returnString = [tempDrive objectForKey:(NSString*)kDADiskDescriptionMediaBSDNameKey];
@@ -71,13 +70,6 @@ enum {
 	return [super initWithWindowNibName:@"OpenDriveDialog"];
 }
 
-- (void)dealloc
-{
-    [operationQueue release];
-    operationQueue = nil;
-    [super dealloc];
-}
-
 - (NSString *)windowNibName 
 {
     return @"OpenDriveDialog";
@@ -98,9 +90,11 @@ enum {
 void addDisk(DADiskRef disk, void * context)
 {
     USE(context);
-	if(DADiskCopyDescription(disk))
+    CFDictionaryRef desc = DADiskCopyDescription(disk);
+	if(desc)
 	{
-        [(id)refSelf addToDriveList:((NSDictionary*)DADiskCopyDescription(disk))];
+        [refSelf addToDriveList:(__bridge NSDictionary *)desc];
+        CFRelease(desc);
 	}
 }
 
@@ -111,30 +105,30 @@ void removeDisk(DADiskRef disk, void * context)
 }
 
 - (void)refreshDriveList
-{	
-	NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
-	DASessionRef session;
-    
-    session = DASessionCreate(kCFAllocatorDefault);
-    
-    if(driveList == nil)
-    {
-        driveList = [[NSMutableArray alloc] init];
+{
+	@autoreleasepool {
+        DASessionRef session;
+        
+        session = DASessionCreate(kCFAllocatorDefault);
+        
+        if(driveList == nil)
+        {
+            driveList = [[NSMutableArray alloc] init];
+        }
+        else 
+        {
+            [driveList 	removeAllObjects];
+        }
+        
+        DARegisterDiskAppearedCallback(session, NULL, addDisk, NULL); 
+        DARegisterDiskDisappearedCallback(session, NULL, removeDisk, NULL);
+        
+        DASessionScheduleWithRunLoop(session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+        
+        CFRunLoopRun();
+        
+        CFRelease(session);
     }
-    else 
-    {
-        [driveList 	removeAllObjects];
-    }
-    
-    DARegisterDiskAppearedCallback(session, NULL, addDisk, self); 
-    DARegisterDiskDisappearedCallback(session, NULL, removeDisk, NULL);
-    
-    DASessionScheduleWithRunLoop(session, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-    
-    CFRunLoopRun();
-    
-    CFRelease(session);
-    [pool drain];
 }
 
 - (IBAction) selectDrive:sender
@@ -148,7 +142,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url)
 {
     if (! url) return NULL;
     CFURLRef result = nil;
-    CFStringRef path = CFURLCopyFileSystemPath((CFURLRef)url, kCFURLPOSIXPathStyle);
+    CFStringRef path = CFURLCopyFileSystemPath((__bridge CFURLRef)url, kCFURLPOSIXPathStyle);
     if (path) 
     {
         char cpath[PATH_MAX + 1];
@@ -184,32 +178,30 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url)
 - (NSError *)makeBlockToCharacterDeviceErrorForOriginalURL:(NSURL *)url newURL:(NSURL *)newURL underlyingError:(NSError *)underlyingError 
 {
     NSError *result;
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-    NSString *failureReason = NSLocalizedString(@"The file is busy.", @"Failure reason for opening a file that's busy");
-    NSString *descriptionFormatString = NSLocalizedString(@"The file at path '%@' could not be opened because it is busy.", @"Error description for opening a file that's busy");
-    NSString *recoverySuggestionFormatString = NSLocalizedString(@"Do you want to open the corresponding character device at path '%@'?", @"Recovery suggestion for opening a character device at a given path");
-    NSString *recoveryOption = NSLocalizedString(@"Open character device", @"Recovery option for opening a character device at a given path");
-    NSString *cancel = NSLocalizedString(@"Cancel", @"Cancel");
-    
-    NSString *description = [NSString stringWithFormat:descriptionFormatString, [url path]];
-    NSString *recoverySuggestion = [NSString stringWithFormat:recoverySuggestionFormatString, [newURL path]];
-    NSArray *recoveryOptions = [NSArray arrayWithObjects:recoveryOption, cancel, nil];
-    NSDictionary *userInfo = [[NSDictionary alloc] initWithObjectsAndKeys:
-                              description, NSLocalizedDescriptionKey,
-                              failureReason, NSLocalizedFailureReasonErrorKey,
-                              recoverySuggestion, NSLocalizedRecoverySuggestionErrorKey,
-                              recoveryOptions, NSLocalizedRecoveryOptionsErrorKey,
-                              underlyingError, NSUnderlyingErrorKey,
-                              self, NSRecoveryAttempterErrorKey,
-                              url, NSURLErrorKey,
-                              [url path], NSFilePathErrorKey,
-                              newURL, kNewURLErrorKey,
-                              nil];
-    result = [[NSError alloc] initWithDomain:NSPOSIXErrorDomain code:EBUSY userInfo:userInfo];
-    
-    [userInfo release];
-    [pool drain];
-    return [result autorelease];
+    @autoreleasepool {
+        NSString *failureReason = NSLocalizedString(@"The file is busy.", @"Failure reason for opening a file that's busy");
+        NSString *descriptionFormatString = NSLocalizedString(@"The file at path '%@' could not be opened because it is busy.", @"Error description for opening a file that's busy");
+        NSString *recoverySuggestionFormatString = NSLocalizedString(@"Do you want to open the corresponding character device at path '%@'?", @"Recovery suggestion for opening a character device at a given path");
+        NSString *recoveryOption = NSLocalizedString(@"Open character device", @"Recovery option for opening a character device at a given path");
+        NSString *cancel = NSLocalizedString(@"Cancel", @"Cancel");
+        
+        NSString *description = [NSString stringWithFormat:descriptionFormatString, [url path]];
+        NSString *recoverySuggestion = [NSString stringWithFormat:recoverySuggestionFormatString, [newURL path]];
+        NSArray *recoveryOptions = [NSArray arrayWithObjects:recoveryOption, cancel, nil];
+        NSDictionary *userInfo = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                  description, NSLocalizedDescriptionKey,
+                                  failureReason, NSLocalizedFailureReasonErrorKey,
+                                  recoverySuggestion, NSLocalizedRecoverySuggestionErrorKey,
+                                  recoveryOptions, NSLocalizedRecoveryOptionsErrorKey,
+                                  underlyingError, NSUnderlyingErrorKey,
+                                  self, NSRecoveryAttempterErrorKey,
+                                  url, NSURLErrorKey,
+                                  [url path], NSFilePathErrorKey,
+                                  newURL, kNewURLErrorKey,
+                                  nil];
+        result = [[NSError alloc] initWithDomain:NSPOSIXErrorDomain code:EBUSY userInfo:userInfo];
+    }
+    return result;
 }
 
 
@@ -235,7 +227,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url)
                     CFURLRef newURL = copyCharacterDevicePathForPossibleBlockDevice(url);
                     if (newURL) 
                     {
-                        error = [self makeBlockToCharacterDeviceErrorForOriginalURL:url newURL:(NSURL *)newURL underlyingError:error];
+                        error = [self makeBlockToCharacterDeviceErrorForOriginalURL:url newURL:(__bridge NSURL *)newURL underlyingError:error];
                         CFRelease(newURL);
                     }
                 }	    

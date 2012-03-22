@@ -49,7 +49,7 @@
 
 #else
 #define REQUIRE_NOT_NULL(a) USE(a)
-#define EXPECT_CLASS(e, c) USE(e)
+#define EXPECT_CLASS(e, c)
 #endif
 
 #if __LP64__
