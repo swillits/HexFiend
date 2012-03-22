@@ -118,7 +118,7 @@ static inline Class preferredByteArrayClass(void) {
     [coder encodeObject:font forKey:@"HFFont"];
     [coder encodeDouble:lineHeight forKey:@"HFLineHeight"];
     [coder encodeBool:_hfflags.antialias forKey:@"HFAntialias"];
-    [coder encodeBool:_hfflags.overwriteMode forKey:@"HFOverwriteMode"];
+    [coder encodeInt:_hfflags.editMode forKey:@"HFEditMode"];
     [coder encodeBool:_hfflags.editable forKey:@"HFEditable"];
     [coder encodeBool:_hfflags.selectable forKey:@"HFSelectable"];
 }
@@ -132,7 +132,14 @@ static inline Class preferredByteArrayClass(void) {
     font = [coder decodeObjectForKey:@"HFFont"];
     lineHeight = (CGFloat)[coder decodeDoubleForKey:@"HFLineHeight"];
     _hfflags.antialias = [coder decodeBoolForKey:@"HFAntialias"];
-    _hfflags.overwriteMode = [coder decodeBoolForKey:@"HFOverwriteMode"];
+    
+    if ([coder containsValueForKey:@"HFEditMode"])
+        _hfflags.editMode = [coder decodeIntForKey:@"HFEditMode"];
+    else {
+        _hfflags.editMode = ([coder decodeBoolForKey:@"HFOverwriteMode"]
+                             ? HFOverwriteMode : HFInsertMode);
+    }
+
     _hfflags.editable = [coder decodeBoolForKey:@"HFEditable"];
     _hfflags.selectable = [coder decodeBoolForKey:@"HFSelectable"];
     representers = [coder decodeObjectForKey:@"HFRepresenters"];
@@ -775,7 +782,7 @@ static inline Class preferredByteArrayClass(void) {
 }
 
 - (BOOL)editable {
-    return _hfflags.editable && ! [byteArray changesAreLocked];
+    return _hfflags.editable && ! [byteArray changesAreLocked] && _hfflags.editMode != HFReadOnlyMode;
 }
 
 - (void)setEditable:(BOOL)flag {
@@ -1686,7 +1693,7 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
 }
 
 - (void)deleteSelection {
-    if ([self inOverwriteMode] || ! [self editable]) {
+    if ([self editMode] == HFOverwriteMode || ! [self editable]) {
         NSBeep();
     }
     else {
@@ -1699,7 +1706,7 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
     REQUIRE_NOT_NULL(newArray);
     EXPECT_CLASS(newArray, HFByteArray);
     HFRange entireRange = HFRangeMake(0, [self contentsLength]);
-    if ([self inOverwriteMode] && [newArray length] != entireRange.length) {
+    if ([self editMode] == HFOverwriteMode && [newArray length] != entireRange.length) {
         NSBeep();
     }
     else {
@@ -1713,7 +1720,7 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
 #if ! NDEBUG
     const unsigned long long startLength = [byteArray length];
     unsigned long long expectedNewLength;
-    if ([self inOverwriteMode]) {
+    if ([self editMode] == HFOverwriteMode) {
         expectedNewLength = startLength;
     }    
     else {
@@ -1734,7 +1741,7 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
 }
 
 - (BOOL)_insertionModeCoreInsertByteArray:(HFByteArray *)bytesToInsert replacingPreviousBytes:(unsigned long long)previousBytes allowUndoCoalescing:(BOOL)allowUndoCoalescing outNewSingleSelectedRange:(HFRange *)outSelectedRange {
-    HFASSERT(! [self inOverwriteMode]);
+    HFASSERT([self editMode] == HFInsertMode);
     REQUIRE_NOT_NULL(bytesToInsert);
     
     /* Guard against overflow.  If [bytesToInsert length] + [self contentsLength] - previousBytes overflows, then we can't do it */
@@ -1842,7 +1849,7 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
     
     BEGIN_TRANSACTION();
     unsigned long long beforeLength = [byteArray length];
-    BOOL inOverwriteMode = [self inOverwriteMode];
+    BOOL inOverwriteMode = [self editMode] == HFOverwriteMode;
     HFRange modificationRange; //either range to remove from selection if in overwrite mode, or range to select if not
     BOOL success;
     if (inOverwriteMode) {
@@ -1873,7 +1880,7 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
 
 - (void)deleteDirection:(HFControllerMovementDirection)direction {
     HFASSERT(direction == HFControllerDirectionLeft || direction == HFControllerDirectionRight);
-    if ([self inOverwriteMode]) {
+    if ([self editMode] != HFInsertMode) {
         NSBeep();
         return;
     }
@@ -1904,18 +1911,18 @@ static BOOL rangesAreInAscendingOrder(NSEnumerator *rangeEnumerator) {
     }
 }
 
-- (BOOL)inOverwriteMode {
-    return _hfflags.overwriteMode;
+- (HFEditMode)editMode {
+    return _hfflags.editMode;
 }
 
-- (void)setInOverwriteMode:(BOOL)val {
-    _hfflags.overwriteMode = val;
-    // don't allow undo coalescing across switching between overwrite mode
-    [self _endTypingUndoCoalescingIfActive];
-}
-
-- (BOOL)requiresOverwriteMode {
-    return NO;
+- (void)setEditMode:(HFEditMode)val
+{
+    if (val != _hfflags.editMode) {
+        _hfflags.editMode = val;
+        // don't allow undo coalescing when switching modes
+        [self _endTypingUndoCoalescingIfActive];
+        [self _addPropertyChangeBits:HFControllerEditable];        
+    }
 }
 
 + (BOOL)prepareForChangeInFile:(NSURL *)targetFile fromWritingByteArray:(HFByteArray *)array {
