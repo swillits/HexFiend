@@ -64,6 +64,7 @@ static NSData *newDataFromByteArray(HFByteArray *array) {
         }
         resultingData = serializedData;
     }
+    [byteArrayToRelease self]; //keep it alive
     return [resultingData bytes];
 }
 
