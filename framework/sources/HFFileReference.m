@@ -135,7 +135,7 @@ static BOOL returnFTruncateError(NSError **error) {
     return ref->device == device && ref->inode == inode;
 }
 
-+ allocWithZone:(NSZone *)zone {
++ (id)allocWithZone:(NSZone *)zone {
     if (self == [HFFileReference class]) {
         /* Default to HFConcreteFileReference */
         return [HFConcreteFileReference allocWithZone:zone];
@@ -155,7 +155,7 @@ static BOOL returnFTruncateError(NSError **error) {
     
 }
 
-- initWithPath:(NSString *)path error:(NSError **)error {
+- (id)initWithPath:(NSString *)path error:(NSError **)error {
     self = [super init];
     isWritable = NO;
     fileDescriptor = -1;
@@ -166,7 +166,7 @@ static BOOL returnFTruncateError(NSError **error) {
     return self;
 }
 
-- initWritableWithPath:(NSString *)path error:(NSError **)error{
+- (id)initWritableWithPath:(NSString *)path error:(NSError **)error{
     self = [super init];
     isWritable = YES;
     fileDescriptor = -1;

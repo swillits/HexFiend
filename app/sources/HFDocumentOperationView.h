@@ -30,9 +30,9 @@
 
 - (void)setOtherTopLevelObjects:(NSArray *)objects;
 
-+ viewWithNibNamed:(NSString *)name owner:(id)owner;
++ (id)viewWithNibNamed:(NSString *)name owner:(id)owner;
 
-- viewNamed:(NSString *)name;
+- (id)viewNamed:(NSString *)name;
 
 - (CGFloat)defaultHeight;
 

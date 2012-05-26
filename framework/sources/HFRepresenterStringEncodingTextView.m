@@ -270,6 +270,7 @@ static int compareGlyphFontIndexes(const void *p1, const void *p2) {
     oldFonts = fonts;
     fonts = localFonts;
     OSSpinLockUnlock(&glyphLoadLock);
+    [oldFonts self]; //make sure the object lives past the lock so we don't deallocate it inside
     
     /* Now insert all of the glyphs into the glyph trie */
     glyphIdx = 0;

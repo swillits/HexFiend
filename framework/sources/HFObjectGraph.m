@@ -10,7 +10,7 @@
 
 @implementation HFObjectGraph
 
-- init {
+- (id)init {
     self = [super init];
     graph = [[NSMapTable alloc] initWithKeyOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality valueOptions:NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPointerPersonality capacity:0];
     return self;

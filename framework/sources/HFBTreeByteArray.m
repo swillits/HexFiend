@@ -13,7 +13,7 @@
 
 @implementation HFBTreeByteArray
 
-- init {
+- (id)init {
     if ((self = [super init])) {
         btree = [[HFBTree alloc] init];
     }
@@ -241,14 +241,14 @@ static inline HFByteSlice *findInitialSlice(HFBTree *btree, HFRange *inoutArrayR
     }
 }
 
-- mutableCopyWithZone:(NSZone *)zone {
+- (id)mutableCopyWithZone:(NSZone *)zone {
     USE(zone);
     HFBTreeByteArray *result = [[[self class] alloc] init];
     result->btree = [btree mutableCopy];
     return result;
 }
 
-- subarrayWithRange:(HFRange)range {
+- (id)subarrayWithRange:(HFRange)range {
     if (range.location == 0 && range.length == [self length]) {
         return [self mutableCopy];
     }

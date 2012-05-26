@@ -478,7 +478,7 @@ static inline Class preferredByteArrayClass(void) {
     [layoutRepresenter performLayout];
 }
 
-- init {
+- (id)init {
     self = [super init];
     
     /* Make sure we register our defaults for this class */

@@ -611,7 +611,7 @@ enum LineCoverage_t {
     return result;
 }
 
-- initWithRepresenter:(HFTextRepresenter *)rep {
+- (id)initWithRepresenter:(HFTextRepresenter *)rep {
     self = [super initWithFrame:NSMakeRect(0, 0, 1, 1)];
     horizontalContainerInset = 4;
     representer = rep;
