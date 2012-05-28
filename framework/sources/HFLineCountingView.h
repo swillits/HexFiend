@@ -16,7 +16,7 @@
     NSTextStorage *textStorage;
     NSTextContainer *textContainer;
     NSDictionary *textAttributes;
-    HFLineCountingRepresenter *representer; //not retained
+    __weak HFLineCountingRepresenter *representer;
     
     NSUInteger bytesPerLine;
     unsigned long long storedLineIndex;

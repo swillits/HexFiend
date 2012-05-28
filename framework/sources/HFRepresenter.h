@@ -29,7 +29,7 @@
 @interface HFRepresenter : NSObject <NSCoding> {
     @private
     id view;
-    HFController *controller;
+    __weak HFController *controller;
     NSPoint layoutPosition;
 }
 

@@ -24,7 +24,7 @@
 	@public
 	NSUInteger softMaxAllocatedMemory;
 	NSUInteger totalAllocatedMemory;
-	//the following ivars are not retained
+
 	HFFileReference *file; 
 	HFProgressTracker *progressTracker;
 	NSMutableArray *queue;

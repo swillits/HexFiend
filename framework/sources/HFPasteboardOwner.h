@@ -14,7 +14,7 @@ extern NSString *const HFPrivateByteArrayPboardType;
 @interface HFPasteboardOwner : NSObject {
     @private
     HFByteArray *byteArray;
-    NSPasteboard *pasteboard; //not retained
+    __weak NSPasteboard *pasteboard;
     IBOutlet NSWindow *progressTrackingWindow;
     IBOutlet NSProgressIndicator *progressTrackingIndicator;
     IBOutlet NSTextField *progressTrackingDescriptionTextField;
