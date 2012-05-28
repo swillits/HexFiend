@@ -24,18 +24,14 @@
     } else if ([self respondsToSelector:@selector(setUserInterfaceItemIdentifier:)]) {
         [self setUserInterfaceItemIdentifier:kHFCancelButtonIdentifier];
     }
+    [self setImage:[NSImage imageNamed:NSImageNameStopProgressTemplate]];
+    [[self cell] setButtonType:NSMomentaryChangeButton];
     return self;
 }
 
 - (id)initWithCoder:(NSCoder *)coder {
     if ((self = [super initWithCoder:coder])) {
-	NSImage *stopImage = [NSImage imageNamed:@"NSStopProgressTemplate"];
-	if (stopImage) {
-	    [self setImage:stopImage];
-	} else {   
-	    [self setImage:HFImageNamed(@"HFCancelOff")];
-	    [self setAlternateImage:HFImageNamed(@"HFCancelOn")];
-	}
+        [self setImage:[NSImage imageNamed:NSImageNameStopProgressTemplate]];
         [[self cell] setButtonType:NSMomentaryChangeButton];
     }
     return self;

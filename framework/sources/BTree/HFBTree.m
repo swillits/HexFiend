@@ -1127,6 +1127,7 @@ FORCE_STATIC_INLINE void btree_apply_function_to_entries(HFBTree *tree, HFBTreeI
     while (depthIndex--) treeCapacity *= BTREE_ORDER;
     NSMutableArray *result = [[NSMutableArray alloc] initWithCapacity:treeCapacity/2]; //assume we're half full
     btree_apply_to_entries(self, 0, ^BOOL(id entry, HFBTreeIndex idx) {
+        USE(idx);
         [result addObject:entry];
         return YES;
     });
