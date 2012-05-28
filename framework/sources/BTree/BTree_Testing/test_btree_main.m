@@ -10,7 +10,7 @@ static inline HFBTreeIndex random_value(NSUInteger max) {
     return result;
 }
 
-static void run_for_shark(void) {
+static void run_for_profiling(void) {
     HFBTree *btree = [[HFBTree alloc] init];
     const NSUInteger max = 5000000;
     CFAbsoluteTime start = CFAbsoluteTimeGetCurrent();
@@ -25,42 +25,46 @@ static void run_for_shark(void) {
 }
 
 static void test_trees(NaiveArray *naiveArray, HFBTree *btree) {
-    [btree checkIntegrityOfCachedLengths];
-    [btree checkIntegrityOfBTreeStructure];
-    
-    NSEnumerator *naiveEnumerator = [naiveArray entryEnumerator], *btreeEnumerator = [btree entryEnumerator];
-    HFBTreeIndex enumeratedOffset = 0;
-    NSUInteger q = 0;
-    for (;;) {
-        TreeEntry *naiveEntry = [naiveEnumerator nextObject];
-        TreeEntry *btreeEntry = [btreeEnumerator nextObject];
-        HFASSERT(naiveEntry == btreeEntry);
-        if (naiveEntry == nil || btreeEntry == nil) break;
-        HFBTreeIndex randomOffsetWithinEntry = enumeratedOffset + (random() % [btreeEntry length]);
-        HFBTreeIndex beginningOffset = -1;
-#if 0
-        TreeEntry *naiveFoundEntry = [naiveArray entryContainingOffset:randomOffsetWithinEntry beginningOffset:&beginningOffset];
-        HFASSERT(naiveFoundEntry == naiveEntry);
-        HFASSERT(beginningOffset == enumeratedOffset);
-#endif        
+    @autoreleasepool {
+        [btree checkIntegrityOfCachedLengths];
+        [btree checkIntegrityOfBTreeStructure];
         
-        TreeEntry *btreeFoundEntry = [btree entryContainingOffset:randomOffsetWithinEntry beginningOffset:&beginningOffset];
-        HFASSERT(btreeFoundEntry == btreeEntry);
-        HFASSERT(beginningOffset == enumeratedOffset);
-        enumeratedOffset += [btreeEntry length];
-        q++;
+        NSEnumerator *naiveEnumerator = [naiveArray entryEnumerator], *btreeEnumerator = [btree entryEnumerator];
+        HFBTreeIndex enumeratedOffset = 0;
+        NSUInteger q = 0;
+        for (;;) {
+            @autoreleasepool {
+                TreeEntry *naiveEntry = [naiveEnumerator nextObject];
+                TreeEntry *btreeEntry = [btreeEnumerator nextObject];
+                HFASSERT(naiveEntry == btreeEntry);
+                if (naiveEntry == nil || btreeEntry == nil) break;
+                HFBTreeIndex randomOffsetWithinEntry = enumeratedOffset + (random() % [btreeEntry length]);
+                HFBTreeIndex beginningOffset = -1;
+        #if 0
+                TreeEntry *naiveFoundEntry = [naiveArray entryContainingOffset:randomOffsetWithinEntry beginningOffset:&beginningOffset];
+                HFASSERT(naiveFoundEntry == naiveEntry);
+                HFASSERT(beginningOffset == enumeratedOffset);
+        #endif        
+                
+                TreeEntry *btreeFoundEntry = [btree entryContainingOffset:randomOffsetWithinEntry beginningOffset:&beginningOffset];
+                HFASSERT(btreeFoundEntry == btreeEntry);
+                HFASSERT(beginningOffset == enumeratedOffset);
+                enumeratedOffset += [btreeEntry length];
+                q++;
+            }
+        }
     }
 }
 
 int main (int argc, const char * argv[]) {
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
     
-    BOOL runForShark = NO;
+    BOOL runForProfiling = NO;
     if (argc >= 2) {
-        runForShark = ! strcmp(argv[1], "-shark");
+        runForProfiling = ! strcmp(argv[1], "-profile");
     }
-    if (runForShark) {
-        run_for_shark();
+    if (runForProfiling) {
+        run_for_profiling();
         [pool drain];
         return 0;
     }

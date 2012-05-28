@@ -1,35 +1,31 @@
+#import <HexFiend/HFTypes.h>
 #import <HexFiend/HFFunctions.h>
 #import <HexFiend/HFController.h>
+#import <objc/runtime.h>
 
 #ifndef NDEBUG
-//#define USE_CHUD 1
-#endif
-
-#ifndef USE_CHUD
-#define USE_CHUD 0
-#endif
-
-#if USE_CHUD
-#import <CHUD/CHUD.h>
 #endif
 
 NSImage *HFImageNamed(NSString *name) {
     HFASSERT(name != NULL);
     NSImage *image = [NSImage imageNamed:name];
     if (image == NULL) {
-        NSString *imagePath = [[NSBundle bundleForClass:[HFController class]] pathForResource:name ofType:@"tiff"];
-        if (! imagePath) {
-            NSLog(@"Unable to find image named %@.tiff", name);
-        }
-        else {
-            image = [[NSImage alloc] initByReferencingFile:imagePath];
-            if (image == nil || ! [image isValid]) {
-                NSLog(@"Couldn't load image at path %@", imagePath);
-                image = nil;
+        Class controllerClass = objc_getClass("HFController");
+        if (controllerClass) {
+            NSString *imagePath = [[NSBundle bundleForClass:controllerClass] pathForResource:name ofType:@"tiff"];
+            if (! imagePath) {
+                NSLog(@"Unable to find image named %@.tiff", name);
             }
             else {
-                [image setName:name];
-                [image setScalesWhenResized:YES];
+                image = [[NSImage alloc] initByReferencingFile:imagePath];
+                if (image == nil || ! [image isValid]) {
+                    NSLog(@"Couldn't load image at path %@", imagePath);
+                    image = nil;
+                }
+                else {
+                    [image setName:name];
+                    [image setScalesWhenResized:YES];
+                }
             }
         }
     }
@@ -698,23 +694,18 @@ void HFUnregisterViewForWindowAppearanceChanges(NSView *self, BOOL appToo) {
 
 @end
 
-#if USE_CHUD
-void HFStartTiming(const char *name) {
-    static BOOL inited;
-    if (! inited) {
-        inited = YES;
-        chudInitialize();
-        chudSetErrorLogFile(stderr);
-        chudAcquireRemoteAccess();
-    }
-    chudStartRemotePerfMonitor(name);
-    
+@implementation HFEnumerator
+
++ (id)enumeratorWithBlock:(id (^)(void))blk {
+    REQUIRE_NOT_NULL(blk);
+    HFEnumerator *result = [[self alloc] init];
+    result->enumerator = [blk copy];
+    return result;
 }
 
-void HFStopTiming(void) {
-    chudStopRemotePerfMonitor();
+- (id)nextObject {
+    return enumerator();
 }
-#else
-void HFStartTiming(const char *name) { USE(name); }
-void HFStopTiming(void) { }
-#endif
+
+@end
+

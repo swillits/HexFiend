@@ -66,8 +66,6 @@
     type name ## static_ [256];\
     type * name = ((number) <= 256 ? name ## static_ : (type *)check_malloc((number) * sizeof(type)))
 
-
-
 #define FREE_ARRAY(name) \
     if (name != name ## static_) free(name)
 

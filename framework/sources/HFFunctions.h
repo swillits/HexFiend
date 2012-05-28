@@ -412,10 +412,10 @@ static inline NSUInteger HFDivideULRoundingUp(NSUInteger a, NSUInteger b) {
 void HFDrawShadow(CGContextRef context, NSRect rect, CGFloat size, NSRectEdge rectEdge, BOOL active, NSRect clip);
 
 /*! Registers a view to have the given notificationSEL invoked (taking the NSNotification object) when the window becomes or loses key.  If appToo is YES, this also registers with NSApplication for Activate and Deactivate methods. */
-void HFRegisterViewForWindowAppearanceChanges(NSView *view, SEL notificationSEL, BOOL appToo);
+void HFRegisterViewForWindowAppearanceChanges(id view, SEL notificationSEL, BOOL appToo);
 
 /*! Unregisters a view to have the given notificationSEL invoked when the window becomes or loses key.  If appToo is YES, this also unregisters with NSApplication. */
-void HFUnregisterViewForWindowAppearanceChanges(NSView *view, BOOL appToo);
+void HFUnregisterViewForWindowAppearanceChanges(id view, BOOL appToo);
 
 /*! Returns a description of the given byte count (e.g. "24 kilobytes") */
 NSString *HFDescribeByteCount(unsigned long long count);
@@ -442,6 +442,16 @@ NSString *HFDescribeByteCount(unsigned long long count);
 
 /*! Given an array of HFRangeWrappers, returns a "cleaned up" array of equivalent ranges.  This new array represents the same indexes, but overlapping ranges will have been merged, and the ranges will be sorted in ascending order. */
 + (NSArray *)organizeAndMergeRanges:(NSArray *)inputRanges;
+
+@end
+
+/*! @brief A convenience subclass of NSEnumerator that invokes a block repeatedly, until it returns nil. */
+@interface HFEnumerator : NSEnumerator {
+    id (^enumerator)(void);
+}
+
+/*! Create an HFEnumerator that generates objects by invoking the given block. */
++ (id)enumeratorWithBlock:(id (^)(void))blk;
 
 @end
 

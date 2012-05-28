@@ -8,17 +8,27 @@
 
 typedef unsigned long long HFBTreeIndex;
 
-@class HFBTreeNode;
-
+#if ! NDEBUG
 #define HFTEST_BTREES 1
+#endif
+
+// Insert at a given offset
+// Find node containing offset
+// Remove entry at a given offset
+
+// We have an annotation: length
+// Walk nodes until we find the node at the given offset
 
 @interface HFBTree : NSObject <NSMutableCopying> {
+    const struct HFBTreeCallbacks_t *callbacks;
     unsigned int depth;
-    HFBTreeNode *root;
+    int role;
+    struct HFBTreeNode *root;
 }
 
-/* entry should conform to HFBTreeEntry */
+- (id)init;
 - (void)insertEntry:(id)entry atOffset:(HFBTreeIndex)offset;
+
 - (id)entryContainingOffset:(HFBTreeIndex)offset beginningOffset:(HFBTreeIndex *)outBeginningOffset;
 - (void)removeEntryAtOffset:(HFBTreeIndex)offset;
 - (void)removeAllEntries;
