@@ -26,7 +26,7 @@
 		795F46C314BAADB600EB2F7D /* DiskArbitration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 795F46C214BAADB600EB2F7D /* DiskArbitration.framework */; };
 		795F46C514BAAEFB00EB2F7D /* OpenDriveDialog.xib in Resources */ = {isa = PBXBuildFile; fileRef = 795F46C414BAAEFB00EB2F7D /* OpenDriveDialog.xib */; };
 		79E2FF1C17459F5E00FA8F12 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 79E2FF1B17459F5E00FA8F12 /* Sparkle.framework */; };
-		79E2FF1E17459FA700FA8F12 /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 79E2FF1B17459F5E00FA8F12 /* Sparkle.framework */; };
+		79E2FF1E17459FA700FA8F12 /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 79E2FF1B17459F5E00FA8F12 /* Sparkle.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		79E2FF201745A2B300FA8F12 /* dsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = 79E2FF1F1745A2B300FA8F12 /* dsa_pub.pem */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
@@ -72,7 +72,7 @@
 		D0315BED1225C553008C9EAB /* HFAnnotatedTree.m in Sources */ = {isa = PBXBuildFile; fileRef = D0315BEB1225C553008C9EAB /* HFAnnotatedTree.m */; };
 		D0370A3F0D68307A00B3A8C6 /* HFSharedMemoryByteSlice.h in Headers */ = {isa = PBXBuildFile; fileRef = D0370A3D0D68307A00B3A8C6 /* HFSharedMemoryByteSlice.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		D0370A400D68307A00B3A8C6 /* HFSharedMemoryByteSlice.m in Sources */ = {isa = PBXBuildFile; fileRef = D0370A3E0D68307A00B3A8C6 /* HFSharedMemoryByteSlice.m */; };
-		D039DC031482DCD000364FA6 /* com.ridiculousfish.HexFiend.PrivilegedHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = D047E3151022CEFE00EF307B /* com.ridiculousfish.HexFiend.PrivilegedHelper */; };
+		D039DC031482DCD000364FA6 /* com.ridiculousfish.HexFiend.PrivilegedHelper in CopyFiles */ = {isa = PBXBuildFile; fileRef = D047E3151022CEFE00EF307B /* com.ridiculousfish.HexFiend.PrivilegedHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D03BD7D3146F676600881576 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97325FDCFA39411CA2CEA /* Foundation.framework */; };
 		D03BD7D4146F676D00881576 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B97324FDCFA39411CA2CEA /* AppKit.framework */; };
 		D03CFA820FC7857B00EE79E4 /* DataInspectorView.xib in Resources */ = {isa = PBXBuildFile; fileRef = D03CFA810FC7857B00EE79E4 /* DataInspectorView.xib */; };
@@ -84,7 +84,7 @@
 		D04327A40CF081CD00C14250 /* HFFunctions_Private.h in Headers */ = {isa = PBXBuildFile; fileRef = D04327A30CF081CD00C14250 /* HFFunctions_Private.h */; };
 		D047E3401022CFA800EF307B /* FortunateSon.defs in Sources */ = {isa = PBXBuildFile; fileRef = D047E33F1022CFA800EF307B /* FortunateSon.defs */; settings = {ATTRIBUTES = (Server, ); }; };
 		D047E48C1022E09300EF307B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D047E48B1022E09300EF307B /* main.cpp */; };
-		D047E4CA1022E1CA00EF307B /* HexFiend.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = D01E7BB80CDC530C00943F9E /* HexFiend.framework */; };
+		D047E4CA1022E1CA00EF307B /* HexFiend.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = D01E7BB80CDC530C00943F9E /* HexFiend.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D04A6B6B100EA47C00704963 /* SaveBanner.xib in Resources */ = {isa = PBXBuildFile; fileRef = D04A6B69100EA47C00704963 /* SaveBanner.xib */; };
 		D04A6B7A100EA4BC00704963 /* FindReplaceBanner.xib in Resources */ = {isa = PBXBuildFile; fileRef = D04A6B78100EA4BC00704963 /* FindReplaceBanner.xib */; };
 		D04A6B97100EA73800704963 /* JumpToOffsetBanner.xib in Resources */ = {isa = PBXBuildFile; fileRef = D04A6B95100EA73800704963 /* JumpToOffsetBanner.xib */; };
@@ -103,7 +103,7 @@
 		D05B77BB0E00856D008C45EB /* HFCancelOff.tiff in Resources */ = {isa = PBXBuildFile; fileRef = D01772B80D72E024002E03DE /* HFCancelOff.tiff */; };
 		D05B77DF0E00883B008C45EB /* HFCancelButton.h in Headers */ = {isa = PBXBuildFile; fileRef = D05B77DD0E00883B008C45EB /* HFCancelButton.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		D05B77E00E00883B008C45EB /* HFCancelButton.m in Sources */ = {isa = PBXBuildFile; fileRef = D05B77DE0E00883B008C45EB /* HFCancelButton.m */; };
-		D05E7A970FF6160500767D95 /* HexFiend.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = D01E7BB80CDC530C00943F9E /* HexFiend.framework */; };
+		D05E7A970FF6160500767D95 /* HexFiend.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = D01E7BB80CDC530C00943F9E /* HexFiend.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		D05E7AAE0FF6167100767D95 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		D061A28F10042D6A0049B8B8 /* HFTextRepresenter_Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = D061A28E10042D6A0049B8B8 /* HFTextRepresenter_Internal.h */; };
 		D0621CAD102ED50D00DAEB4D /* FortunateSonServerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0621CAC102ED50D00DAEB4D /* FortunateSonServerImpl.cpp */; };
@@ -1189,7 +1189,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 0610;
 				ORGANIZATIONNAME = ridiculous_fish;
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "HexFiend_2" */;
@@ -1621,10 +1621,12 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = framework/sources/HexFiend_2_Framework_Prefix.pch;
 				INFOPLIST_FILE = "framework/HexFiend_Framework-Info.plist";
-				INSTALL_PATH = "@loader_path/../Frameworks";
+				INSTALL_PATH = "@rpath";
 				LD_DYLIB_INSTALL_NAME = "@loader_path/../Frameworks/HexFiend.framework/Versions/A/HexFiend";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "-fblocks";
 				PRODUCT_NAME = HexFiend;
+				SKIP_INSTALL = YES;
 				WARNING_CFLAGS = (
 					"-W",
 					"-Wall",
@@ -1648,6 +1650,7 @@
 					"helper_subprocess/FortunateSon-Launchd.plist",
 				);
 				PRODUCT_NAME = com.ridiculousfish.HexFiend.PrivilegedHelper;
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -1758,10 +1761,12 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = framework/sources/HexFiend_2_Framework_Prefix.pch;
 				INFOPLIST_FILE = "framework/HexFiend_Framework-Info.plist";
-				INSTALL_PATH = "@loader_path/../Frameworks";
+				INSTALL_PATH = "@rpath";
 				LD_DYLIB_INSTALL_NAME = "@loader_path/../Frameworks/HexFiend.framework/Versions/A/HexFiend";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "-fblocks";
 				PRODUCT_NAME = HexFiend;
+				SKIP_INSTALL = YES;
 				WARNING_CFLAGS = (
 					"-W",
 					"-Wall",
@@ -1785,6 +1790,7 @@
 					"helper_subprocess/FortunateSon-Launchd.plist",
 				);
 				PRODUCT_NAME = com.ridiculousfish.HexFiend.PrivilegedHelper;
+				SKIP_INSTALL = YES;
 			};
 			name = "Debug+UnitTests";
 		};
@@ -1895,10 +1901,12 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = framework/sources/HexFiend_2_Framework_Prefix.pch;
 				INFOPLIST_FILE = "framework/HexFiend_Framework-Info.plist";
-				INSTALL_PATH = "@loader_path/../Frameworks";
+				INSTALL_PATH = "@rpath";
 				LD_DYLIB_INSTALL_NAME = "@loader_path/../Frameworks/HexFiend.framework/Versions/A/HexFiend";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "-fblocks";
 				PRODUCT_NAME = HexFiend;
+				SKIP_INSTALL = YES;
 				WARNING_CFLAGS = (
 					"-W",
 					"-Wall",
@@ -1922,6 +1930,7 @@
 					"helper_subprocess/FortunateSon-Launchd.plist",
 				);
 				PRODUCT_NAME = com.ridiculousfish.HexFiend.PrivilegedHelper;
+				SKIP_INSTALL = YES;
 			};
 			name = "Release+CodeSign";
 		};
@@ -1968,6 +1977,7 @@
 					"helper_subprocess/FortunateSon-Launchd.plist",
 				);
 				PRODUCT_NAME = com.ridiculousfish.HexFiend.PrivilegedHelper;
+				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
@@ -2060,10 +2070,12 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = framework/sources/HexFiend_2_Framework_Prefix.pch;
 				INFOPLIST_FILE = "framework/HexFiend_Framework-Info.plist";
-				INSTALL_PATH = "@loader_path/../Frameworks";
+				INSTALL_PATH = "@rpath";
 				LD_DYLIB_INSTALL_NAME = "@loader_path/../Frameworks/HexFiend.framework/Versions/A/HexFiend";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "-fblocks";
 				PRODUCT_NAME = HexFiend;
+				SKIP_INSTALL = YES;
 				WARNING_CFLAGS = (
 					"-W",
 					"-Wall",
@@ -2087,6 +2099,7 @@
 					"helper_subprocess/FortunateSon-Launchd.plist",
 				);
 				PRODUCT_NAME = com.ridiculousfish.HexFiend.PrivilegedHelper;
+				SKIP_INSTALL = YES;
 			};
 			name = "Debug+CodeSign";
 		};
@@ -2177,10 +2190,12 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = framework/sources/HexFiend_2_Framework_Prefix.pch;
 				INFOPLIST_FILE = "framework/HexFiend_Framework-Info.plist";
-				INSTALL_PATH = "@loader_path/../Frameworks";
+				INSTALL_PATH = "@rpath";
 				LD_DYLIB_INSTALL_NAME = "@loader_path/../Frameworks/HexFiend.framework/Versions/A/HexFiend";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = "-fblocks";
 				PRODUCT_NAME = HexFiend;
+				SKIP_INSTALL = YES;
 				WARNING_CFLAGS = (
 					"-W",
 					"-Wall",
