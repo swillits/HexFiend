@@ -158,7 +158,7 @@ static NSInteger sortByLayoutPosition(id a, id b, void *self) {
         }
         newNumGranules = maxKnownGood;
     }
-    return MAX(1, newNumGranules) * granularity;
+    return MAX(1u, newNumGranules) * granularity;
 }
 
 - (BOOL)_anyLayoutInfoIsVerticallyResizable:(NSArray *)vals {
@@ -253,10 +253,10 @@ static NSInteger sortByLayoutPosition(id a, id b, void *self) {
 }
 
 - (NSArray *)representers {
-    return representers ? [NSArray arrayWithArray:representers] : [NSArray array];
+    return representers ? [[representers copy] autorelease] : @[];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     maximizesBytesPerLine = YES;
     return self;
@@ -275,7 +275,7 @@ static NSInteger sortByLayoutPosition(id a, id b, void *self) {
     [coder encodeBool:maximizesBytesPerLine forKey:@"HFMaximizesBytesPerLine"];
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     representers = [[coder decodeObjectForKey:@"HFRepresenters"] retain];

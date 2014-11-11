@@ -15,21 +15,12 @@
 
 #include "fileport.h"
 
-static HFPrivilegedHelperConnection *sSharedConnection;
-
 @implementation HFPrivilegedHelperConnection
 
-+ (HFPrivilegedHelperConnection *)sharedConnection {
-    if (! sSharedConnection) {
-        sSharedConnection = [[self alloc] init];
-    }
-    return sSharedConnection;
-}
-
-- (id)init {
-    self = [super init];
-    
-    return self;
++ (instancetype)sharedConnection {
+    static id shared = nil;
+    if (!shared) shared = [[self alloc] init];
+    return shared;
 }
 
 static NSString *read_line(FILE *file) {
@@ -122,7 +113,7 @@ static NSString *read_line(FILE *file) {
 
 - (BOOL)getInfo:(struct HFProcessInfo_t *)outInfo forProcess:(pid_t)process {
     HFASSERT(outInfo != NULL);
-    if (! [self connectIfNecessary]) return NO;
+    if (![self connectIfNecessary]) return NO;
     uint8_t bitSize = 0;
     kern_return_t kr = _GratefulFatherProcessInfo([childReceiveMachPort machPort], process, &bitSize);
     if (kr != KERN_SUCCESS) {
@@ -134,6 +125,7 @@ static NSString *read_line(FILE *file) {
 }
 
 - (BOOL)connectIfNecessary {
+    if (self.disabled) return NO;
     if (childReceiveMachPort == nil) {
         NSError *oops = nil;
         if (! [self launchAndConnect:&oops]) {
@@ -144,6 +136,11 @@ static NSString *read_line(FILE *file) {
 }
 
 - (BOOL)launchAndConnect:(NSError **)error {
+    if (self.disabled) {
+        if(error) *error = nil;
+        return NO;
+    }
+    
     /* If we're already connected, we're done */
     if ([childReceiveMachPort isValid]) return YES;
     
@@ -179,7 +176,7 @@ static NSString *read_line(FILE *file) {
                 *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSUserCancelledError userInfo:nil];
             } else {
                 NSString *description = [NSString stringWithFormat:@"Failed to create AuthorizationRef (error code %ld).", (long)err];
-                *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileReadNoPermissionError userInfo:[NSDictionary dictionaryWithObjectsAndKeys:description, NSLocalizedDescriptionKey, nil]];
+                *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileReadNoPermissionError userInfo:@{NSLocalizedDescriptionKey: description}];
             }
         }
 	}

@@ -41,12 +41,12 @@ struct HFEditInstruction_t {
     
     int32_t concurrentProcesses;
     dispatch_queue_t insnQueue;
-    __strong struct HFEditInstruction_t *insns;
+    struct HFEditInstruction_t *insns;
     size_t insnCount, insnCapacity;
 }
 
 /*! Computes the edit script (differences) from src to dst.  This retains both src and dst, and if they are modified then the receiver will likely no longer function. You may optionally pass an HFProgressTracker for progress reporting and cancellation.  This returns nil if it was cancelled. */
-- (id)initWithDifferenceFromSource:(HFByteArray *)src toDestination:(HFByteArray *)dst trackingProgress:(HFProgressTracker *)progressTracker;
+- (instancetype)initWithDifferenceFromSource:(HFByteArray *)src toDestination:(HFByteArray *)dst trackingProgress:(HFProgressTracker *)progressTracker;
 
 /*! Applies the receiver to an HFByteArray. */
 - (void)applyToByteArray:(HFByteArray *)byteArray;

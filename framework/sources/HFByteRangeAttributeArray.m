@@ -32,14 +32,14 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     HFRange range;
 }
 
-- (id)initWithName:(NSString *)nameParameter range:(HFRange)rangeParameter;
+- (instancetype)initWithName:(NSString *)nameParameter range:(HFRange)rangeParameter;
 
 @end
 
 /* These guys are immutable! */
 @implementation HFByteRangeAttributeRun
 
-- (id)initWithName:(NSString *)nameParameter range:(HFRange)rangeParameter {
+- (instancetype)initWithName:(NSString *)nameParameter range:(HFRange)rangeParameter {
     HFASSERT(nameParameter != nil);
     self = [super init];
     name = [nameParameter copy];
@@ -64,7 +64,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
 
 @implementation HFByteRangeAttributeArray
 
-- (id)init {
+- (instancetype)init {
     if ([self class] == [HFByteRangeAttributeArray class]) {
         [self release];
         return [[HFAnnotatedTreeByteRangeAttributeArray alloc] init];
@@ -121,8 +121,8 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     NSUInteger amt = 0;
     int num = 0;
     const BOOL log = NO;
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     while (remaining.length > 0) {
+        @autoreleasepool {
         unsigned long long applied1, applied2;
         NSSet *atts1 = [self attributesAtIndex:remaining.location length:&applied1];
         NSSet *atts2 = [array attributesAtIndex:remaining.location length:&applied2];
@@ -152,10 +152,8 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
         remaining.length -= applied1;
         remaining.location += applied1;
         amt++;
-        [pool drain];
-        pool = [[NSAutoreleasePool alloc] init];
+        } // @autoreleasepool
     }
-    [pool drain];
     return result;
 }
 
@@ -171,7 +169,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     return [NSString stringWithFormat:@"<%@: %p %@>", [self class], self, attributeRuns];
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     attributeRuns = [[NSMutableArray alloc] init];
     return self;
@@ -204,7 +202,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     NSMutableIndexSet *indexesToRemove = [[NSMutableIndexSet alloc] init];
     NSUInteger index = 0, max = [attributeRuns count];
     for (index = 0; index < max; index++) {
-        HFByteRangeAttributeRun *run = [attributeRuns objectAtIndex:index];
+        HFByteRangeAttributeRun *run = attributeRuns[index];
         if ([attributeName isEqualToString:run->name] && HFIntersectsRange(range, run->range)) {
             HFRange leftRemainder = {0, 0}, rightRemainder = {0, 0};
             if (run->range.location < range.location) {
@@ -217,7 +215,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
             if (leftRemainder.length || rightRemainder.length) {
                 /* Replacing existing run with remainder */
                 run = [[HFByteRangeAttributeRun alloc] initWithName:attributeName range:(leftRemainder.length ? leftRemainder : rightRemainder)];
-                [attributeRuns replaceObjectAtIndex:index withObject:run];
+                attributeRuns[index] = run;
                 [run release];
             }
             if (leftRemainder.length && rightRemainder.length) {
@@ -244,7 +242,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     HFASSERT(attributeName != nil);
     NSUInteger idx = [attributeRuns count];
     while (idx--) {
-        HFByteRangeAttributeRun *run = [attributeRuns objectAtIndex:idx];
+        HFByteRangeAttributeRun *run = attributeRuns[idx];
         if ([attributeName isEqualToString:run->name]) {
             [attributeRuns removeObjectAtIndex:idx];
         }
@@ -254,7 +252,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
 - (void)removeAttributes:(NSSet *)attributeNames {
     NSUInteger idx = [attributeRuns count];
     while (idx--) {
-        HFByteRangeAttributeRun *run = [attributeRuns objectAtIndex:idx];
+        HFByteRangeAttributeRun *run = attributeRuns[idx];
         if ([attributeNames containsObject:run->name]) {
             [attributeRuns removeObjectAtIndex:idx];
         }
@@ -379,7 +377,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
             /* No change */
         } else {
             HFByteRangeAttributeRun *newRun = [[HFByteRangeAttributeRun alloc] initWithName:run->name range:newRange];
-            [attributeRuns replaceObjectAtIndex:idx withObject:newRun];
+            attributeRuns[idx] = newRun;
             [newRun release];
         }
         idx++;
@@ -396,7 +394,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     HFRange range;
 }
 
-- (id)initWithAttribute:(NSString *)attribute range:(HFRange)val;
+- (instancetype)initWithAttribute:(NSString *)attribute range:(HFRange)val;
 - (NSString *)attribute;
 - (HFRange)range;
 
@@ -412,7 +410,7 @@ static const HFRange kEntireRange = {0, ULLONG_MAX};
     return result;
 }
 
-- (id)initWithAttribute:(NSString *)attr range:(HFRange)val {
+- (instancetype)initWithAttribute:(NSString *)attr range:(HFRange)val {
     self = [super init];
     attribute = [attr copy];
     range = val;
@@ -504,7 +502,7 @@ static BOOL applyHandlerForNodesInRange(HFByteRangeAttributeArrayNode *node, HFR
     HFByteRangeAttributeArrayNode *node;
 }
 
-- (id)initWithNode:(HFByteRangeAttributeArrayNode *)val;
+- (instancetype)initWithNode:(HFByteRangeAttributeArrayNode *)val;
 
 @end
 
@@ -514,7 +512,7 @@ static BOOL applyHandlerForNodesInRange(HFByteRangeAttributeArrayNode *node, HFR
     return applyHandlerForNodesInRange([self->atree rootNode], range, handler, YES /* isRoot */);
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     atree = [[HFAnnotatedTree alloc] initWithAnnotater:node_max_range];
     attributesToNodes = [[NSMutableDictionary alloc] init];
@@ -539,17 +537,17 @@ static BOOL applyHandlerForNodesInRange(HFByteRangeAttributeArrayNode *node, HFR
 
 /* Helper function to insert a value into a set under the given key, creating it if necessary.  This could be more efficient as a CFSet because we want object identity semantics. */
 static void insertIntoDictionaryOfSets(NSMutableDictionary *dictionary, NSString *key, id value) {
-    NSMutableSet *set = [dictionary objectForKey:key];
+    NSMutableSet *set = dictionary[key];
     if (! set) {
         set = [[NSMutableSet alloc] init];
-        [dictionary setObject:set forKey:key];
+        dictionary[key] = set;
         [set release];
     }
     [set addObject:value];
 }
 
 static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString *key, id value) {
-    NSMutableSet *set = [dictionary objectForKey:key];
+    NSMutableSet *set = dictionary[key];
     if (set) {
         [set removeObject:value];
         if (! [set count]) [dictionary removeObjectForKey:key];
@@ -599,7 +597,7 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
     }];
     
     /* We're going to remove these from the attributesToNodes set */
-    NSMutableSet *allNodesWithAttribute = [attributesToNodes objectForKey:attributeName];
+    NSMutableSet *allNodesWithAttribute = attributesToNodes[attributeName];
     
     FOREACH(HFByteRangeAttributeArrayNode *, node, nodesToDelete) {
         
@@ -637,7 +635,7 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
 
 - (void)removeAttribute:(NSString *)attributeName {
     /* We can just remove everything in attributesToNodes */
-    NSMutableSet *matchingNodes = [attributesToNodes objectForKey:attributeName];
+    NSMutableSet *matchingNodes = attributesToNodes[attributeName];
     if (matchingNodes) {
         FOREACH(HFByteRangeAttributeArrayNode *, node, matchingNodes) {
             [atree removeNode:node];
@@ -719,10 +717,16 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
 }
 
 - (void)byteRange:(HFRange)dyingRange wasReplacedByBytesOfLength:(unsigned long long)replacementLength {
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    @autoreleasepool {
     
-    NSMapTable *nodesToReplace = [NSMapTable strongToStrongObjectsMapTable];
-    
+    NSMapTable *nodesToReplace;
+    // strongToStrongObjectsMapTable requires 10.8+
+    if ([NSMapTable respondsToSelector:@selector(strongToStrongObjectsMapTable)]) {
+        nodesToReplace = [NSMapTable strongToStrongObjectsMapTable];
+    } else {
+        nodesToReplace = [NSMapTable mapTableWithStrongToStrongObjects];
+    }
+
     const id null = [NSNull null];
     
     HFRange extendedRange = HFRangeMake(dyingRange.location, ULLONG_MAX - dyingRange.location);
@@ -806,7 +810,7 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
         }
     }
     
-    [pool drain];
+    } // @autoreleasepool
 }
 
 - (id)mutableCopyWithZone:(NSZone *)zone {
@@ -831,7 +835,7 @@ static void removeFromDictionaryOfSets(NSMutableDictionary *dictionary, NSString
 
 @implementation HFAnnotatedTreeByteRangeAttributeArrayEnumerator
 
-- (id)initWithNode:(HFByteRangeAttributeArrayNode *)val {
+- (instancetype)initWithNode:(HFByteRangeAttributeArrayNode *)val {
     self = [super init];
     node = val;
     return self;

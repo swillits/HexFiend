@@ -57,7 +57,7 @@ enum Endianness_t {
 };
 
 /* A class representing a single row of the data inspector */
-@interface DataInspector : NSObject {
+@interface DataInspector : NSObject<NSCoding> {
     enum InspectorType_t inspectorType;
     enum Endianness_t endianness;
 }
@@ -65,11 +65,8 @@ enum Endianness_t {
 /* A data inspector that is different from the given inspectors, if possible. */
 + (DataInspector*)dataInspectorSupplementing:(NSArray*)inspectors;
 
-- (enum InspectorType_t)type;
-- (void)setType:(enum InspectorType_t)type;
-
-- (enum Endianness_t)endianness;
-- (void)setEndianness:(enum Endianness_t)endianness;
+@property (nonatomic) enum InspectorType_t type;
+@property (nonatomic) enum Endianness_t endianness;
 
 - (id)valueForController:(HFController *)controller ranges:(NSArray*)ranges isError:(BOOL *)outIsError;
 - (id)valueForData:(NSData *)data isError:(BOOL *)outIsError;
@@ -79,8 +76,7 @@ enum Endianness_t {
 - (BOOL)acceptStringValue:(NSString *)value replacingByteCount:(NSUInteger)count intoData:(unsigned char *)outData;
 
 /* Get and set a property list representation, for persisting to user defaults */
-- (id)propertyListRepresentation;
-- (void)setPropertyListRepresentation:(id)plist;
+@property (nonatomic, strong) id propertyListRepresentation;
 
 @end
 
@@ -126,7 +122,7 @@ enum Endianness_t {
     [coder encodeInt32:endianness forKey:@"Endianness"];
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super init];
     inspectorType = [coder decodeInt32ForKey:@"InspectorType"];
@@ -374,7 +370,7 @@ static NSString * const InspectionErrorInternal = @"(internal error)";
 static NSAttributedString *inspectionError(NSString *s) {
     NSMutableParagraphStyle *paragraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
     [paragraphStyle setMinimumLineHeight:(CGFloat)16.];
-    NSAttributedString *result = [[NSAttributedString alloc] initWithString:s attributes:[NSDictionary dictionaryWithObjectsAndKeys:[NSColor disabledControlTextColor], NSForegroundColorAttributeName, [NSFont controlContentFontOfSize:11], NSFontAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil]];
+    NSAttributedString *result = [[NSAttributedString alloc] initWithString:s attributes:@{NSForegroundColorAttributeName: [NSColor disabledControlTextColor], NSFontAttributeName: [NSFont controlContentFontOfSize:11], NSParagraphStyleAttributeName: paragraphStyle}];
     [paragraphStyle release];
     return [result autorelease];
 }
@@ -386,7 +382,7 @@ static NSAttributedString *inspectionError(NSString *s) {
         if(outIsError) *outIsError = YES;
         return inspectionError(@"(select a contiguous range)");
     }
-    HFRange range = [[ranges objectAtIndex:0] HFRange];
+    HFRange range = [ranges[0] HFRange];
     
     if(range.length == 0) {
         if(outIsError) *outIsError = YES;
@@ -656,12 +652,12 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
 }
 
 - (id)propertyListRepresentation {
-    return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:inspectorType], @"InspectorType", [NSNumber numberWithInt:endianness], @"Endianness", nil];
+    return @{@"InspectorType": @(inspectorType), @"Endianness": @(endianness)};
 }
 
 - (void)setPropertyListRepresentation:(id)plist {
-    inspectorType = [[plist objectForKey:@"InspectorType"] intValue];
-    endianness = [[plist objectForKey:@"Endianness"] intValue];
+    inspectorType = [plist[@"InspectorType"] intValue];
+    endianness = [plist[@"Endianness"] intValue];
 }
 
 @end
@@ -686,7 +682,7 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
 
 @implementation DataInspectorRepresenter
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     inspectors = [[NSMutableArray alloc] init];
     [self loadDefaultInspectors];
@@ -704,7 +700,7 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
     [coder encodeObject:inspectors forKey:@"HFInspectors"];
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     inspectors = [[coder decodeObjectForKey:@"HFInspectors"] retain];
@@ -793,7 +789,7 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
 - (NSInteger)selectedByteCountForEditing {
     NSArray *selectedRanges = [[self controller] selectedContentsRanges];
     if ([selectedRanges count] != 1) return INVALID_EDITING_BYTE_COUNT;
-    HFRange selectedRange = [[selectedRanges objectAtIndex:0] HFRange];
+    HFRange selectedRange = [selectedRanges[0] HFRange];
     if (selectedRange.length > MAX_EDITABLE_BYTE_COUNT) return INVALID_EDITING_BYTE_COUNT;
     return ll2l(selectedRange.length);
 }
@@ -805,19 +801,19 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
 
 - (id)tableView:(NSTableView *)tableView objectValueForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
     USE(tableView);
-    DataInspector *inspector = [inspectors objectAtIndex:row];
+    DataInspector *inspector = inspectors[row];
     NSString *ident = [tableColumn identifier];
     if ([ident isEqualToString:kInspectorTypeColumnIdentifier]) {
-        return [NSNumber numberWithInt:[inspector type]];
+        return @([inspector type]);
     }
     else if ([ident isEqualToString:kInspectorSubtypeColumnIdentifier]) {
-        return [NSNumber numberWithInt:[inspector endianness]];
+        return @([inspector endianness]);
     }
     else if ([ident isEqualToString:kInspectorValueColumnIdentifier]) {
         return [self valueFromInspector:inspector isError:NULL];
     }
     else if ([ident isEqualToString:kInspectorAddButtonColumnIdentifier] || [ident isEqualToString:kInspectorSubtractButtonColumnIdentifier]) {
-        return [NSNumber numberWithInt:1]; //just a button
+        return @1; //just a button
     }
     else {
         NSLog(@"Unknown column identifier %@", ident);
@@ -830,7 +826,7 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
     /* This gets called after clicking on the + or - button.  If you delete the last row, then this gets called with a row >= the number of inspectors, so bail out for +/- buttons before pulling out our inspector */
     if ([ident isEqualToString:kInspectorSubtractButtonColumnIdentifier]) return;
     
-    DataInspector *inspector = [inspectors objectAtIndex:row];
+    DataInspector *inspector = inspectors[row];
     if ([ident isEqualToString:kInspectorTypeColumnIdentifier]) {
         [inspector setType:[object intValue]];
         [tableView reloadData];
@@ -875,7 +871,7 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
                                                             hasHorizontalScroller:[scrollView hasHorizontalScroller]
                                                               hasVerticalScroller:[scrollView hasVerticalScroller]
                                                                        borderType:[scrollView borderType]].height + kScrollViewExtraPadding;
-        [[NSNotificationCenter defaultCenter] postNotificationName:DataInspectorDidChangeRowCount object:self userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithDouble:newScrollViewHeight] forKey:@"height"]];
+        [[NSNotificationCenter defaultCenter] postNotificationName:DataInspectorDidChangeRowCount object:self userInfo:@{@"height": @(newScrollViewHeight)}];
     }
 }
 
@@ -903,9 +899,9 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
 - (IBAction)doubleClickedTable:(id)sender {
     USE(sender);
     NSInteger column = [table clickedColumn], row = [table clickedRow];
-    if (column >= 0 && row >= 0 && [[[[table tableColumns] objectAtIndex:column] identifier] isEqual:kInspectorValueColumnIdentifier]) {
+    if (column >= 0 && row >= 0 && [[[table tableColumns][column] identifier] isEqual:kInspectorValueColumnIdentifier]) {
 	BOOL isError;
-	[self valueFromInspector:[inspectors objectAtIndex:row] isError:&isError];
+	[self valueFromInspector:inspectors[row] isError:&isError];
 	if (! isError) {
 	    [table editColumn:column row:row withEvent:[NSApp currentEvent] select:YES];
 	}
@@ -923,7 +919,7 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
     NSUInteger byteCount = [self selectedByteCountForEditing];
     if (byteCount == INVALID_EDITING_BYTE_COUNT) return NO;
     
-    DataInspector *inspector = [inspectors objectAtIndex:row];
+    DataInspector *inspector = inspectors[row];
     return [inspector acceptStringValue:[fieldEditor string] replacingByteCount:byteCount intoData:NULL];
 }
 
@@ -960,7 +956,7 @@ static BOOL stringRangeIsNullBytes(NSString *string, NSRange range) {
 
 @implementation DataInspectorPlusMinusButtonCell
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
     [self setBezelStyle:NSRoundRectBezelStyle];
     return self;

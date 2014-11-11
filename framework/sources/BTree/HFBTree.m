@@ -79,7 +79,7 @@ static HFBTreeNode *mutable_copy_node(HFBTreeNode *node, TreeDepth_t depth, HFBT
     ChildIndex_t childIndex;
 }
 
-- (id)initWithLeaf:(HFBTreeLeaf *)leaf;
+- (instancetype)initWithLeaf:(HFBTreeLeaf *)leaf;
 
 @end
 
@@ -164,7 +164,7 @@ static HFBTreeNode *mutable_copy_node(HFBTreeNode *node, TreeDepth_t depth, HFBT
 
 @implementation HFBTree
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     depth = BAD_DEPTH;
     root = nil;
@@ -176,7 +176,7 @@ static HFBTreeNode *mutable_copy_node(HFBTreeNode *node, TreeDepth_t depth, HFBT
     [super dealloc];
 }
 
-#if HFTEST_BTREES
+#if HFUNIT_TESTS
 - (void)checkIntegrityOfCachedLengths {
     if (root == nil) {
         /* nothing */
@@ -1046,7 +1046,7 @@ FORCE_STATIC_INLINE void btree_apply_function_to_entries(HFBTree *tree, HFBTreeI
 }
 
 - (NSEnumerator *)entryEnumerator {
-    if (! root) return [[NSArray array] objectEnumerator];
+    if (! root) return [@[] objectEnumerator];
     HFBTreeLeaf *leaf = btree_find_leaf(self, 0).leaf;
     return [[[HFBTreeEnumerator alloc] initWithLeaf:leaf] autorelease];
 }
@@ -1058,7 +1058,7 @@ static BOOL add_to_array(id entry, HFBTreeIndex offset __attribute__((unused)), 
 }
 
 - (NSArray *)allEntries {
-    if (! root) return [NSArray array];
+    if (! root) return @[];
     NSUInteger treeCapacity = 1;
     unsigned int depthIndex = depth;
     while (depthIndex--) treeCapacity *= BTREE_ORDER;
@@ -1078,7 +1078,7 @@ static BOOL add_to_array(id entry, HFBTreeIndex offset __attribute__((unused)), 
 
 @implementation HFBTreeEnumerator
 
-- (id)initWithLeaf:(HFBTreeLeaf *)leaf {
+- (instancetype)initWithLeaf:(HFBTreeLeaf *)leaf {
     NSParameterAssert(leaf != nil);
     ASSERT_IS_LEAF(leaf);
     currentLeaf = leaf;

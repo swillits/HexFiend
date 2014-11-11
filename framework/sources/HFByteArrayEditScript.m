@@ -14,9 +14,9 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-#define READ_AMOUNT (1024 * 32)
+#define READ_AMOUNT (1024u * 32u)
 #define CONCURRENT_PROCESS_COUNT 16
-#define MAX_RECURSION_DEPTH 64
+#define MAX_RECURSION_DEPTH 64u
 
 #if NDEBUG
 #define BYTEARRAY_RELEASE_INLINE __attribute__((always_inline)) static
@@ -34,8 +34,8 @@ enum {
     NUM_CACHES
 };
 
-#define HEURISTIC_THRESHOLD (1024)
-#define SQUARE_CACHE_SIZE (1024)
+#define HEURISTIC_THRESHOLD (1024u)
+#define SQUARE_CACHE_SIZE (1024u)
 
 // This is the type of an abstract index in some local LCS problem
 typedef int32_t LocalIndex_t;
@@ -274,13 +274,9 @@ static BOOL validate_instructions(const struct HFEditInstruction_t *insns, size_
 
 /* The entry point for appending a snake to the instruction list (that is, splitting instructions that contain the snake) */
 BYTEARRAY_RELEASE_INLINE
-void append_snake_to_instructions(HFByteArrayEditScript *self, unsigned long long srcOffset, unsigned long long dstOffset, unsigned long long snakeLength) {
+void append_snake_to_instructions(__unsafe_unretained HFByteArrayEditScript *self, unsigned long long srcOffset, unsigned long long dstOffset, unsigned long long snakeLength) {
     HFASSERT(snakeLength > 0);
-    void * const selfP = self; //no need to retain self in the block
-    
     dispatch_async(self->insnQueue, ^{
-        HFByteArrayEditScript * const self = selfP;
-        
         /* Bail if we cancelled */
         if (*self->cancelRequested) return;
         
@@ -342,7 +338,7 @@ void append_snake_to_instructions(HFByteArrayEditScript *self, unsigned long lon
                 if (self->insnCount == self->insnCapacity) {
                     size_t desiredCapacity = ((self->insnCount + 1) * 8) / 5;
                     size_t newBufferByteCount = malloc_good_size(desiredCapacity * insnSize);
-                    self->insns = NSReallocateCollectable(self->insns, newBufferByteCount, 0); //not scanned, not collectable
+                    self->insns = check_realloc(self->insns, newBufferByteCount);
                     self->insnCapacity = newBufferByteCount / insnSize;
                 }
                 HFASSERT(self->insnCount < self->insnCapacity);
@@ -1316,7 +1312,8 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     
     /* Make an initial "everything replaces everything" instruction */
     insnCapacity = 128;
-    insns = NSAllocateCollectable(insnCapacity * sizeof *insns, 0);
+    if(insns) free(insns);
+    insns = malloc(insnCapacity * sizeof(*insns));
     insns[0].src = HFRangeMake(0, sourceLength);
     insns[0].dst = HFRangeMake(0, destLength);
     insnCount = 1;
@@ -1358,7 +1355,7 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     return success;
 }
 
-- (id)initWithSource:(HFByteArray *)src toDestination:(HFByteArray *)dst { 
+- (instancetype)initWithSource:(HFByteArray *)src toDestination:(HFByteArray *)dst { 
     self = [super init];
     NSParameterAssert(src != nil);
     NSParameterAssert(dst != nil);
@@ -1404,13 +1401,11 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     [tracker release];
     
     CFAbsoluteTime end = CFAbsoluteTimeGetCurrent();
-    
-    printf("Diffs computed in %.2f seconds\n", end - start);
-    
+    fprintf(stderr, "Diffs computed in %.2f seconds\n", end - start);
     return result;
 }
 
-- (id)initWithDifferenceFromSource:(HFByteArray *)src toDestination:(HFByteArray *)dst trackingProgress:(HFProgressTracker *)progressTracker {
+- (instancetype)initWithDifferenceFromSource:(HFByteArray *)src toDestination:(HFByteArray *)dst trackingProgress:(HFProgressTracker *)progressTracker {
     self = [self initWithSource:src toDestination:dst];
     BOOL success = [self computeDifferencesTrackingProgress:progressTracker];
     if (! success) {
@@ -1425,6 +1420,7 @@ static inline enum HFEditInstructionType HFByteArrayInstructionType(struct HFEdi
     [source release];
     [destination release];
     free(insns);
+    insns = NULL;
     [super dealloc];
 }
 

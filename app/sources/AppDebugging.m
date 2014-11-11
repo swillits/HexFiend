@@ -20,7 +20,7 @@
     [NSApp stopModalWithCode:NSRunAbortedResponse];
 }
 
-- (id)initWithPromptText:(NSString *)text {
+- (instancetype)initWithPromptText:(NSString *)text {
     self = [super initWithWindowNibName:@"GenericPrompt"];
     promptText = [text copy];
     return self;
@@ -103,7 +103,7 @@ static NSString *promptForValue(NSString *promptText) {
     unsigned i;
     Class clsHFRandomDataByteSlice = NSClassFromString(@"HFRandomDataByteSlice");
     for (i=1; i <= tweakCount; i++) {
-	NSAutoreleasePool* pool=[[NSAutoreleasePool alloc] init];
+	@autoreleasepool {
 	NSUInteger op;
 	const unsigned long long length = [byteArray length];
 	unsigned long long offset;
@@ -125,7 +125,7 @@ static NSString *promptForValue(NSString *promptText) {
 		break;
 	    }
 	}
-	[pool drain];
+    } // @autoreleasepool
     }
     [controller replaceByteArray:byteArray];
     [byteArray release];

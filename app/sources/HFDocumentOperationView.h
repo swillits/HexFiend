@@ -11,7 +11,6 @@
 
 @interface HFDocumentOperationView : HFResizingView {
     NSString *nibName;
-    NSString *displayName;
     BOOL awokenFromNib;
     id threadResult;
     dispatch_group_t waitGroup;
@@ -36,11 +35,8 @@
 
 - (CGFloat)defaultHeight;
 
-- (BOOL)isFixedHeight;
-- (void)setIsFixedHeight:(BOOL)val;
-
-- (NSString *)displayName;
-- (void)setDisplayName:(NSString *)name;
+@property (nonatomic) BOOL isFixedHeight;
+@property (nonatomic, copy) NSString *displayName;
 
 - (IBAction)cancelViewOperation:sender;
 

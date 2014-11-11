@@ -26,7 +26,7 @@
 #define UNIMPLEMENTED() UNIMPLEMENTED_VOID(); return 0
 
 /* Macro to "use" a variable to prevent unused variable warnings. */
-#define USE(x) (void)(x)
+#define USE(x) ((void)(x))
 
 #define check_malloc(x) ({ size_t _count = (x); void *_result = malloc(_count); if(!_result) { fprintf(stderr, "Out of memory allocating %lu bytes\n", (unsigned long)_count); exit(EXIT_FAILURE); } _result; })
 #define check_calloc(x) ({ size_t _count = (x); void *_result = calloc(_count, 1); if(!_result) { fprintf(stderr, "Out of memory allocating %lu bytes\n", (unsigned long)_count); exit(EXIT_FAILURE); } _result; })
@@ -52,16 +52,8 @@
 #define EXPECT_CLASS(e, c) USE(e)
 #endif
 
-#ifndef MISSING_FAST_ENUMERATION
-#define FOREACH(type, var, exp) for (type var in (exp)) 
-#else
-/* Helper macros used by FOREACH */
-#define FOREACH_LINE(type, var, exp, line) NSEnumerator *enum_ ## var ## line = [exp objectEnumerator]; type var ; while ((var = [enum_ ## var ## line nextObject]))
-#define FOREACH_TEMP(type, var, exp, line) FOREACH_LINE(type, var, exp, line)
-#define FOREACH(type, var, exp) FOREACH_TEMP(type, var, exp, __LINE__)
-#endif
+#define FOREACH(type, var, exp) for (type var in (exp))
 
-/* Create a stack or dynamic array of the given size.  This memory is NOT scanned and is NOT collected!  Anything you put in here must have external references! */
 #define NEW_ARRAY(type, name, number) \
     type name ## static_ [256];\
     type * name = ((number) <= 256 ? name ## static_ : check_malloc((number) * sizeof(type)))
@@ -91,9 +83,8 @@
 
 #ifdef __OBJC__
     #import <HexFiend/HFFunctions.h>
-    #import <HexFiend/HFFunctions_Private.h>
+    #import "HFFunctions_Private.h"
 #endif
-
 
 #ifndef __has_feature      // Optional.
 #define __has_feature(x) 0 // Compatibility with non-clang compilers.

@@ -35,13 +35,13 @@
     [cell setBackgroundStyle:NSBackgroundStyleRaised];
 }
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     [self _sharedInitStatusBarView];
     return self;
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     [self _sharedInitStatusBarView];
@@ -147,14 +147,14 @@
     [coder encodeInt64:statusMode forKey:@"HFStatusMode"];
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     statusMode = (NSUInteger)[coder decodeInt64ForKey:@"HFStatusMode"];
     return self;
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     statusMode = [[NSUserDefaults standardUserDefaults] integerForKey:kHFStatusBarDefaultModeUserDefaultsKey];
     return self;
@@ -220,7 +220,7 @@
         NSArray *ranges = [controller selectedContentsRanges];
         NSUInteger rangeCount = [ranges count];
         if (rangeCount == 1) {
-            HFRange range = [[ranges objectAtIndex:0] HFRange];
+            HFRange range = [ranges[0] HFRange];
             if (range.length == 0) {
                 string = [self stringForEmptySelectionAtOffset:range.location length:length];
             }
@@ -244,11 +244,11 @@
     [[self view] setString:string];
 }
 
-- (NSUInteger)statusMode {
+- (HFStatusBarMode)statusMode {
     return statusMode;
 }
 
-- (void)setStatusMode:(NSUInteger)mode {
+- (void)setStatusMode:(HFStatusBarMode)mode {
     statusMode = mode;
     [self updateString];
 }

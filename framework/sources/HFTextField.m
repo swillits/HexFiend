@@ -23,7 +23,7 @@
     [[layoutRepresenter view] setFrame:viewFrame];
 }
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     if ((self = [super initWithFrame:frame])) {
         dataController = [[HFController alloc] init];
         
@@ -127,7 +127,7 @@
     REQUIRE_NOT_NULL(rep);
     HFASSERT(rep == hexRepresenter || rep == textRepresenter);
     BOOL result = NO;
-    NSArray *reps = [dataController representers];
+    NSArray *reps = dataController.representers;
     if (reps) {
         result = ([reps indexOfObjectIdenticalTo:rep] != NSNotFound);
     }

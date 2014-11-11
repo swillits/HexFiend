@@ -19,19 +19,12 @@
     UNIMPLEMENTED();
 }
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
-    
-    /* SnowLeopard controlAlternatingRowBackgroundColors were:
-       1.0, 1.0, 1.0
-       0.93, 0.95, 1.0
-    */
-       
     
     NSColor *color1 = [NSColor colorWithCalibratedWhite:1.0 alpha:1.0];
     NSColor *color2 = [NSColor colorWithCalibratedRed:.87 green:.89 blue:1. alpha:1.];
-    rowBackgroundColors = [[NSArray alloc] initWithObjects:color1, color2, nil];
-//    rowBackgroundColors = [[NSColor controlAlternatingRowBackgroundColors] copy];
+    _rowBackgroundColors = [@[color1, color2] retain];
     
     return self;
 }
@@ -40,22 +33,22 @@
     if ([self isViewLoaded]) {
         [[self view] clearRepresenter];
     }
-    [rowBackgroundColors release];
+    [_rowBackgroundColors release];
     [super dealloc];
 }
 
 - (void)encodeWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     [super encodeWithCoder:coder];
-    [coder encodeBool:behavesAsTextField forKey:@"HFBehavesAsTextField"];
-    [coder encodeObject:rowBackgroundColors forKey:@"HFRowBackgroundColors"];
+    [coder encodeBool:_behavesAsTextField forKey:@"HFBehavesAsTextField"];
+    [coder encodeObject:_rowBackgroundColors forKey:@"HFRowBackgroundColors"];
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
-    behavesAsTextField = [coder decodeBoolForKey:@"HFBehavesAsTextField"];
-    rowBackgroundColors = [[coder decodeObjectForKey:@"HFRowBackgroundColors"] retain];
+    _behavesAsTextField = [coder decodeBoolForKey:@"HFBehavesAsTextField"];
+    _rowBackgroundColors = [[coder decodeObjectForKey:@"HFRowBackgroundColors"] retain];
     return self;
 }
 
@@ -224,7 +217,7 @@
         [self updateText];
     }
     else {
-        [view setFont:[NSFont fontWithName:@"Monaco" size:(CGFloat)10.]];
+        [view setFont:[NSFont fontWithName:HFDEFAULT_FONT size:HFDEFAULT_FONTSIZE]];
     }
 }
 
@@ -292,7 +285,7 @@
 
 - (NSUInteger)byteGranularity {
     HFRepresenterTextView *view = [self view];
-    NSUInteger bytesPerColumn = MAX([view bytesPerColumn], 1), bytesPerCharacter = [view bytesPerCharacter];
+    NSUInteger bytesPerColumn = MAX([view bytesPerColumn], 1u), bytesPerCharacter = [view bytesPerCharacter];
     return HFLeastCommonMultiple(bytesPerColumn, bytesPerCharacter);
 }
 
@@ -362,7 +355,7 @@
             
             NSNumber *key = [[NSNumber alloc] initWithUnsignedInteger:mark];
             NSNumber *value = [[NSNumber alloc] initWithInteger:(long)(bookmarkRange.location - displayedRange.location)];
-            [result setObject:value forKey:key];
+            result[key] = value;
             [key release];
             [value release];
         }
@@ -414,7 +407,7 @@
     REQUIRE_NOT_NULL(pb);
     if ([[self controller] editable]) {
         // we can paste if the pboard contains text or contains an HFByteArray
-        return [HFPasteboardOwner unpackByteArrayFromPasteboard:pb] || [pb availableTypeFromArray:[NSArray arrayWithObject:NSStringPboardType]];
+        return [HFPasteboardOwner unpackByteArrayFromPasteboard:pb] || [pb availableTypeFromArray:@[NSStringPboardType]];
     }
     return NO;
 }
@@ -440,7 +433,7 @@
         result = YES;
     }
     else {
-        NSString *stringType = [pb availableTypeFromArray:[NSArray arrayWithObject:NSStringPboardType]];
+        NSString *stringType = [pb availableTypeFromArray:@[NSStringPboardType]];
         if (stringType) {
             NSString *stringValue = [pb stringForType:stringType];
             if (stringValue) {
@@ -452,25 +445,6 @@
         }
     }
     return result;
-}
-
-- (NSArray *)rowBackgroundColors {
-    return rowBackgroundColors;
-}
-
-- (void)setRowBackgroundColors:(NSArray *)colors {
-    if (colors != rowBackgroundColors) {
-        [rowBackgroundColors release];
-        rowBackgroundColors = [colors copy];
-    }
-}
-
-- (void)setBehavesAsTextField:(BOOL)val {
-    behavesAsTextField = val;
-}
-
-- (BOOL)behavesAsTextField {
-    return behavesAsTextField;
 }
 
 @end

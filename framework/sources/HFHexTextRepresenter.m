@@ -11,57 +11,92 @@
 #import <HexFiend/HFProgressTracker.h>
 
 @interface HFHexPasteboardOwner : HFPasteboardOwner {
-    
+    NSUInteger _bytesPerColumn;
 }
+@property (nonatomic) NSUInteger bytesPerColumn;
 @end
 
-static unsigned char hex2char(NSUInteger c) {
+static inline unsigned char hex2char(NSUInteger c) {
     HFASSERT(c < 16);
     return "0123456789ABCDEF"[c];
 }
 
 @implementation HFHexPasteboardOwner
 
+@synthesize bytesPerColumn = _bytesPerColumn;
+
+- (unsigned long long)stringLengthForDataLength:(unsigned long long)dataLength {
+    if(!dataLength) return 0;
+    // -1 because no trailing space for an exact multiple.
+    unsigned long long spaces = _bytesPerColumn ? (dataLength-1)/_bytesPerColumn : 0;
+    if ((ULLONG_MAX - spaces)/2 <= dataLength) return ULLONG_MAX;
+    else return dataLength*2 + spaces;
+}
+
 - (void)writeDataInBackgroundToPasteboard:(NSPasteboard *)pboard ofLength:(unsigned long long)length forType:(NSString *)type trackingProgress:(HFProgressTracker *)tracker {
     HFASSERT([type isEqual:NSStringPboardType]);
+    if(length == 0) {
+        [pboard setString:@"" forType:type];
+        return;
+    }
     HFByteArray *byteArray = [self byteArray];
     HFASSERT(length <= NSUIntegerMax);
     NSUInteger dataLength = ll2l(length);
-    HFASSERT(dataLength < NSUIntegerMax / 3);
-    NSUInteger stringLength = dataLength * 3;
-    NSUInteger offset = 0, remaining = dataLength;
+    NSUInteger stringLength = ll2l([self stringLengthForDataLength:length]);
+    HFASSERT(stringLength < ULLONG_MAX);
+    NSUInteger offset = 0, stringOffset = 0, remaining = dataLength;
     volatile long long * const progressReportingPointer = (volatile long long *)&tracker->currentProgress;
     [tracker setMaxProgress:dataLength];
     unsigned char * restrict const stringBuffer = check_malloc(stringLength);
     while (remaining > 0) {
-	if (tracker->cancelRequested) break;
-	unsigned char dataBuffer[32 * 1024];
-	NSUInteger amountToCopy = MIN(sizeof dataBuffer, remaining);
-	[byteArray copyBytes:dataBuffer range:HFRangeMake(offset, amountToCopy)];
-	for (NSUInteger i = 0; i < amountToCopy; i++) {
-	    unsigned char c = dataBuffer[i];
-	    stringBuffer[offset*3 + i*3] = hex2char(c >> 4);
-	    stringBuffer[offset*3 + i*3 + 1] = hex2char(c & 0xF);
-	    stringBuffer[offset*3 + i*3 + 2] = ' ';
-	}
-	offset += amountToCopy;
-	remaining -= amountToCopy;
-	HFAtomicAdd64(amountToCopy, progressReportingPointer);
+        if (tracker->cancelRequested) break;
+        unsigned char dataBuffer[32 * 1024];
+        NSUInteger amountToCopy = MIN(sizeof dataBuffer, remaining);
+        NSUInteger bound = offset + amountToCopy - 1;
+        [byteArray copyBytes:dataBuffer range:HFRangeMake(offset, amountToCopy)];
+        
+        if(_bytesPerColumn > 0 && offset > 0) { // ensure offset > 0 to skip adding a leading space
+            NSUInteger left = _bytesPerColumn - (offset % _bytesPerColumn);
+            if(left != _bytesPerColumn) {
+                while(left-- > 0 && offset <= bound) {
+                    unsigned char c = dataBuffer[offset++];
+                    stringBuffer[stringOffset] = hex2char(c >> 4);
+                    stringBuffer[stringOffset + 1] = hex2char(c & 0xF);
+                    stringOffset += 2;
+                }
+            }
+            if(offset <= bound)
+                stringBuffer[stringOffset++] = ' ';
+        }
+        
+        if(_bytesPerColumn > 0) while(offset+_bytesPerColumn <= bound) {
+            for(NSUInteger j = 0; j < _bytesPerColumn; j++) {
+                unsigned char c = dataBuffer[offset++];
+                stringBuffer[stringOffset] = hex2char(c >> 4);
+                stringBuffer[stringOffset + 1] = hex2char(c & 0xF);
+                stringOffset += 2;
+            }
+            stringBuffer[stringOffset++] = ' ';
+        }
+        
+        while (offset <= bound) {
+            unsigned char c = dataBuffer[offset++];
+            stringBuffer[stringOffset] = hex2char(c >> 4);
+            stringBuffer[stringOffset + 1] = hex2char(c & 0xF);
+            stringOffset += 2;
+        }
+        
+        remaining -= amountToCopy;
+        HFAtomicAdd64(amountToCopy, progressReportingPointer);
     }
     if (tracker->cancelRequested) {
-	[pboard setString:@"" forType:type];
-	free(stringBuffer);
+        [pboard setString:@"" forType:type];
+        free(stringBuffer);
+    } else {
+        NSString *string = [[NSString alloc] initWithBytesNoCopy:stringBuffer length:stringLength encoding:NSASCIIStringEncoding freeWhenDone:YES];
+        [pboard setString:string forType:type];
+        [string release];
     }
-    else {
-	NSString *string = [[NSString alloc] initWithBytesNoCopy:stringBuffer length:stringLength - MIN(stringLength, 1) encoding:NSASCIIStringEncoding freeWhenDone:YES];
-	[pboard setString:string forType:type];
-	[string release];
-    }
-}
-
-- (unsigned long long)stringLengthForDataLength:(unsigned long long)dataLength {
-    if (HFProductDoesNotOverflow(dataLength, 3)) return dataLength * 3;
-    else return ULLONG_MAX;    
 }
 
 @end
@@ -99,7 +134,7 @@ static unsigned char hex2char(NSUInteger c) {
         HFController *controller = [self controller];
         NSArray *selectedRanges = [controller selectedContentsRanges];
         if ([selectedRanges count] == 1) {
-            HFRange selectedRange = [[selectedRanges objectAtIndex:0] HFRange];
+            HFRange selectedRange = [selectedRanges[0] HFRange];
             result = (selectedRange.length == 0 && selectedRange.location > 0 && selectedRange.location - 1 == omittedNybbleLocation);
         }
     }
@@ -137,7 +172,7 @@ static unsigned char hex2char(NSUInteger c) {
         [data getBytes:&unpartneredLastNybble range:NSMakeRange([data length] - 1, 1)];
         NSArray *selectedRanges = [controller selectedContentsRanges];
         HFASSERT([selectedRanges count] >= 1);
-        HFRange selectedRange = [[selectedRanges objectAtIndex:0] HFRange];
+        HFRange selectedRange = [selectedRanges[0] HFRange];
         HFASSERT(selectedRange.location > 0);
         omittedNybbleLocation = HFSubtract(selectedRange.location, 1);
     }
@@ -146,7 +181,7 @@ static unsigned char hex2char(NSUInteger c) {
     }
 }
 
-- (NSData *)dataFromPasteboardString:(NSString *)string  {
+- (NSData *)dataFromPasteboardString:(NSString *)string {
     REQUIRE_NOT_NULL(string);
     return HFDataFromHexString(string, NULL);
 }
@@ -164,10 +199,10 @@ static unsigned char hex2char(NSUInteger c) {
     HFASSERT(selection != NULL);
     if ([selection length] == 0) {
         NSBeep();
-    }
-    else {
-        HFHexPasteboardOwner *owner = [HFHexPasteboardOwner ownPasteboard:pb forByteArray:selection withTypes:[NSArray arrayWithObjects:HFPrivateByteArrayPboardType, NSStringPboardType, nil]];
+    } else {
+        HFHexPasteboardOwner *owner = [HFHexPasteboardOwner ownPasteboard:pb forByteArray:selection withTypes:@[HFPrivateByteArrayPboardType, NSStringPboardType]];
         [owner setBytesPerLine:[self bytesPerLine]];
+        owner.bytesPerColumn = self.bytesPerColumn;
     }
 }
 

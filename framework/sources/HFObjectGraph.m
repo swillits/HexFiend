@@ -6,11 +6,11 @@
 //
 
 #import <HexFiend/HFObjectGraph.h>
-
+#import "HFTest.h"
 
 @implementation HFObjectGraph
 
-- (id)init {
+- (instancetype)init {
     self = [super init];
     graph = (__strong CFMutableDictionaryRef)CFMakeCollectable(CFDictionaryCreateMutable(NULL, 0, NULL, &kCFTypeDictionaryValueCallBacks));
     containedObjects = [[NSMutableArray alloc] init]; //containedObjects is necessary to make sure that our key objects are strongly referenced, since we use a NULL-callback dictionary
@@ -102,7 +102,7 @@ static void tarjan(HFObjectGraph *self, id node, CFMutableDictionaryRef vIndexes
     tarjan(self, magicStartNode, vIndexes, vLowlinks, stack, &index, objects, result);
     
     /* Remove the one array containing magicStartNode */
-    HFASSERT([[result lastObject] count] == 1 && [[result lastObject] objectAtIndex:0] == magicStartNode);
+    HFASSERT([[result lastObject] count] == 1 && [result lastObject][0] == magicStartNode);
     [result removeLastObject];
     
     [magicStartNode release];
@@ -240,18 +240,17 @@ static NSSet *arraysToSets(NSArray *array, NSUInteger depth) {
     return result;
 }
 
-+ (void)runTests {
++ (void)runHFUnitTests:(HFRegisterTestFailure_b)registerFailure {
     NSUInteger outer;
-    for (outer = 0; outer < 100; outer++) {
-        NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    for (outer = 0; outer < 100; outer++) @autoreleasepool {
         HFObjectGraph *graph = [[self alloc] init];
         NSUInteger i, objectCount = 2 + (random() % (100 - 2));
         NSUInteger connectionCount = random() % (objectCount * 2);
         NSMutableArray *objects = [NSMutableArray array];
-        for (i=0; i < objectCount; i++) [objects addObject:[NSNumber numberWithUnsignedLong:i]];
+        for (i=0; i < objectCount; i++) [objects addObject:@(i)];
         for (i=0; i < connectionCount; i++) {
-            id object1 = [objects objectAtIndex: random() % objectCount];
-            id object2 = [objects objectAtIndex: random() % objectCount];
+            id object1 = objects[random() % objectCount];
+            id object2 = objects[random() % objectCount];
             if (! [graph object:object1 hasDependency:object2]) {
                 [graph addDependency:object2 forObject:object1];
             }
@@ -260,19 +259,9 @@ static NSSet *arraysToSets(NSArray *array, NSUInteger depth) {
         id naive = [graph naiveStronglyConnectedComponentsForObjects:objects];
         id tarjan = [graph stronglyConnectedComponentsForObjects:objects];
         
-        if (! [arraysToSets(naive, 2) isEqual:arraysToSets(tarjan, 2)]) {
-            printf("Error in HFObjectGraph tests!\n\tnaive: %s\n\ttarjan: %s\n", [[naive description] UTF8String], [[tarjan description] UTF8String]);
-            exit(EXIT_FAILURE);
-        }
+        HFTEST([arraysToSets(naive, 2) isEqual:arraysToSets(tarjan, 2)], @"Error in HFObjectGraph tests!\n\tnaive: %@\n\ttarjan: %@\n", naive, tarjan);
         
         [graph release];
-        [pool drain];
-    }
-}
-
-+ (void)initialize {
-    if (self == [HFObjectGraph class]) {
-        [self runTests];
     }
 }
 #endif

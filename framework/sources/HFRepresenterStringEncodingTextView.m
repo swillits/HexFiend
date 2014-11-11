@@ -70,7 +70,8 @@ static BOOL getGlyphs(CGGlyph *glyphs, NSString *string, NSFont *inputFont) {
     /* A NO return means some or all characters were not mapped.  This is OK.  We'll use the replacement glyph.  Unless we're calculating the replacement glyph!  Hmm...maybe we should have a series of replacement glyphs that we try? */
     
     ////////////////////////
-    // Workaround for a Mavericks bug. Still present as of 10.9.2
+    // Workaround for a Mavericks bug. Still present as of 10.9.5
+    // TODO: Hmm, still? Should look into this again, either it's not a bug or Apple needs a poke.
     if(!result) for(NSUInteger i = 0; i < length; i+=15) {
         CFIndex x = length-i;
         if(x > 15) x = 15;
@@ -235,8 +236,8 @@ static int compareGlyphFontIndexes(const void *p1, const void *p2) {
         if (i == validGlyphCount || validGlyphs[i].fontIndex != runFontIndex) {
             /* End the current run */
             if (runLength > 0) {
-                NSLog(@"Drawing with %@", [[localFonts objectAtIndex:runFontIndex] screenFont]);
-                [[[localFonts objectAtIndex:runFontIndex] screenFont] set];
+                NSLog(@"Drawing with %@", [localFonts[runFontIndex] screenFont]);
+                [[localFonts[runFontIndex] screenFont] set];
                 CGContextSetTextPosition(ctx, 0, 50);
                 CGContextShowGlyphsWithAdvances(ctx, cgglyphs, advances, runLength);
             }
@@ -273,7 +274,7 @@ static int compareGlyphFontIndexes(const void *p1, const void *p2) {
     OSSpinLockUnlock(&glyphLoadLock);
     
     /* The base font is the first font */
-    NSFont *font = [localFonts objectAtIndex:0];
+    NSFont *font = localFonts[0];
     
     NSUInteger charVal, glyphIdx, charCount = [charactersToLoad count];
     NEW_ARRAY(struct HFGlyph_t, glyphs, charCount);
@@ -374,7 +375,7 @@ static int compareGlyphFontIndexes(const void *p1, const void *p2) {
     [super setFont:font];
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     encoding = (NSStringEncoding)[coder decodeInt64ForKey:@"HFStringEncoding"];
@@ -383,7 +384,7 @@ static int compareGlyphFontIndexes(const void *p1, const void *p2) {
     return self;
 }
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     encoding = NSMacOSRomanStringEncoding;
     bytesPerChar = HFStringEncodingCharacterLength(encoding);
@@ -462,7 +463,7 @@ static int compareGlyphFontIndexes(const void *p1, const void *p2) {
         /* Now our cache should be up to date */
         HFASSERT(idx < [fontCache count]);
     }
-    return [fontCache objectAtIndex:idx];
+    return fontCache[idx];
 }
 
 /* Override of base class method in case we are 16 bit */

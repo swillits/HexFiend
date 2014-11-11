@@ -67,7 +67,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
             break;
         case eOpenCharacterFile:
         {
-            NSURL *newURL = [[error userInfo] objectForKey:kNewURLErrorKey];
+            NSURL *newURL = [error userInfo][kNewURLErrorKey];
             if (newURL) {
                 NSError *anotherError = nil;
                 NSDocument *newDocument = [self openURL:newURL error:&anotherError];
@@ -92,7 +92,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
 /* Given that a URL 'url' could not be opened because it referenced a block device, construct an error that offers to open the corresponding character device at 'newURL' */ 
 - (NSError *)makeBlockToCharacterDeviceErrorForOriginalURL:(NSURL *)url newURL:(NSURL *)newURL underlyingError:(NSError *)underlyingError {
     NSError *result;
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    @autoreleasepool {
     NSString *failureReason = NSLocalizedString(@"The file is busy.", @"Failure reason for opening a file that's busy");
     NSString *descriptionFormatString = NSLocalizedString(@"The file at path '%@' could not be opened because it is busy.", @"Error description for opening a file that's busy");
     NSString *recoverySuggestionFormatString = NSLocalizedString(@"Do you want to open the corresponding character device at path '%@'?", @"Recovery suggestion for opening a character device at a given path");
@@ -101,7 +101,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
     
     NSString *description = [NSString stringWithFormat:descriptionFormatString, [url path]];
     NSString *recoverySuggestion = [NSString stringWithFormat:recoverySuggestionFormatString, [newURL path]];
-    NSArray *recoveryOptions = [NSArray arrayWithObjects:recoveryOption, cancel, nil];
+    NSArray *recoveryOptions = @[recoveryOption, cancel];
     NSDictionary *userInfo = [[NSDictionary alloc] initWithObjectsAndKeys:
                               description, NSLocalizedDescriptionKey,
                               failureReason, NSLocalizedFailureReasonErrorKey,
@@ -116,7 +116,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
     result = [[NSError alloc] initWithDomain:NSPOSIXErrorDomain code:EBUSY userInfo:userInfo];
     
     [userInfo release];
-    [pool drain];
+    }
     return [result autorelease];
 }
 
@@ -158,7 +158,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
 
 - (void)fetchIconOp:(NSString *)path {
     /* This is invoked off the main thread */
-    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    @autoreleasepool {
     NSImage *result = nil;
     NSString *expandedPath = [path stringByExpandingTildeInPath];
     if ([expandedPath length] == 0) {
@@ -168,7 +168,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
         result = [[NSWorkspace sharedWorkspace] iconForFile:expandedPath];
     }
     [self performSelectorOnMainThread:@selector(updateIcon:) withObject:result waitUntilDone:NO];
-    [pool drain];
+    }
 }
 
 - (void)updateIconAndOKButtonEnabledState {
@@ -192,7 +192,7 @@ static CFURLRef copyCharacterDevicePathForPossibleBlockDevice(NSURL *url) {
 - (void)windowDidLoad {
     [super windowDidLoad];
     NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
-    [defs registerDefaults:[NSDictionary dictionaryWithObject:@"/dev/disk0s1" forKey:kOpenPathDialogPathKey]];
+    [defs registerDefaults:@{kOpenPathDialogPathKey: @"/dev/disk0s1"}];
     [okButton setEnabled:[[pathField stringValue] length] > 0];
     NSString *value = [defs stringForKey:kOpenPathDialogPathKey];
     if (value) [pathField setStringValue:value];

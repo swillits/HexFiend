@@ -29,7 +29,7 @@
 }
 
 - (void)_HFControllerDidChangeProperties:(NSNotification *)note {
-    NSNumber *propertyNumber = [[note userInfo] objectForKey:HFControllerChangedPropertiesKey];
+    NSNumber *propertyNumber = [note userInfo][HFControllerChangedPropertiesKey];
     NSUInteger propertyMask = [propertyNumber unsignedIntegerValue];
     if (propertyMask & (HFControllerContentValue | HFControllerContentLength)) {
         /* Note that this isn't quite right.  If we don't have any cached data, then we can't provide the "before" data for this change.  In practice, this is likely harmless, but it's still something that should be fixed at some point.
@@ -47,9 +47,9 @@
     NSDictionary *bindingInfo = [self infoForBinding:@"data"];
     if (bindingInfo != nil) {
         NSData *valueToSet = [self data];
-        id observedObject = [bindingInfo objectForKey:NSObservedObjectKey];
-        NSString *keyPath = [bindingInfo objectForKey:NSObservedKeyPathKey];
-        NSValueTransformer *transformer = [[bindingInfo objectForKey:NSOptionsKey] objectForKey:NSValueTransformerBindingOption];
+        id observedObject = bindingInfo[NSObservedObjectKey];
+        NSString *keyPath = bindingInfo[NSObservedKeyPathKey];
+        NSValueTransformer *transformer = bindingInfo[NSOptionsKey][NSValueTransformerBindingOption];
         if ([transformer isKindOfClass:[NSValueTransformer class]] && [[transformer class] allowsReverseTransformation]) { //often the transformer is NSNull :(
             valueToSet = [transformer reverseTransformedValue:valueToSet];
         }
@@ -63,12 +63,12 @@
     return result;
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
     HFASSERT([coder allowsKeyedCoding]);
     self = [super initWithCoder:coder];
     dataController = [[coder decodeObjectForKey:@"HFController"] retain];
     layoutRepresenter = [[coder decodeObjectForKey:@"HFLayoutRepresenter"] retain];
-    backgroundColors = [[coder decodeObjectForKey:@"HFBackgroundColors"] retain];
+    _backgroundColors = [[coder decodeObjectForKey:@"HFBackgroundColors"] retain];
     bordered = [coder decodeBoolForKey:@"HFBordered"];
     NSMutableData *byteArrayData = [coder decodeObjectForKey:@"HFByteArrayMutableData"]; //may be nil
     [self _sharedInitHFTextViewWithMutableData:byteArrayData];
@@ -81,7 +81,7 @@
     [super encodeWithCoder:coder];    
     [coder encodeObject:dataController forKey:@"HFController"];
     [coder encodeObject:layoutRepresenter forKey:@"HFLayoutRepresenter"];
-    [coder encodeObject:backgroundColors forKey:@"HFBackgroundColors"];
+    [coder encodeObject:_backgroundColors forKey:@"HFBackgroundColors"];
     [coder encodeBool:bordered forKey:@"HFBordered"];
     /* We save our ByteArray if it's 64K or less */
     HFByteArray *byteArray = [dataController byteArray];
@@ -97,10 +97,10 @@
     }
 }
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     
-    backgroundColors = [[NSColor controlAlternatingRowBackgroundColors] copy];
+    _backgroundColors = [[NSColor controlAlternatingRowBackgroundColors] retain];
     
     dataController = [[HFController alloc] init];
     layoutRepresenter = [[HFLayoutRepresenter alloc] init];
@@ -165,19 +165,15 @@
     return [[self controller] byteArray];
 }
 
-- (NSArray *)backgroundColors {
-    return backgroundColors;
-}
-
 - (void)setBackgroundColors:(NSArray *)colors {
-    if (colors != backgroundColors) {
-        [backgroundColors release];
-        backgroundColors = [colors copy];
+    if (colors != _backgroundColors) {
+        [_backgroundColors release];
+        _backgroundColors = [colors copy];
         id rep;
-        NSEnumerator *enumer = [[[self controller] representers] objectEnumerator];
+        NSEnumerator *enumer = [[self controller].representers objectEnumerator];
         while ((rep = [enumer nextObject])) {
             if ([rep isKindOfClass:[HFTextRepresenter class]]) {
-                [rep setRowBackgroundColors:colors];
+                ((HFTextRepresenter*)rep).rowBackgroundColors = colors;
             }
         }
     }
@@ -246,7 +242,7 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self name:HFControllerDidChangePropertiesNotification object:dataController];
     [dataController release];
     [layoutRepresenter release];
-    [backgroundColors release];
+    [_backgroundColors release];
     [cachedData release];
     [super dealloc];
 }

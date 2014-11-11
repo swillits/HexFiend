@@ -19,24 +19,24 @@
 @interface HFIndexSet (HFPrivateStuff)
 
 - (NSUInteger)bsearchOnValue:(unsigned long long)idx;
-- (HFRange *)pointerToRangeAtIndex:(NSUInteger)idx;
+- (HFRange *)pointerToRangeAtIndex:(NSUInteger)idx NS_RETURNS_INNER_POINTER;
 
 @end
 
 @implementation HFIndexSet
 
-- (id)init {
+- (instancetype)init {
     return [super init];
 }
 
-- (id)initWithValue:(unsigned long long)value {
+- (instancetype)initWithValue:(unsigned long long)value {
     self = [self init];
     rangeCount = 1;
     singleRange = HFRangeMake(value, 1);
     return self;
 }
 
-- (id)initWithValuesInRange:(HFRange)range {
+- (instancetype)initWithValuesInRange:(HFRange)range {
     self = [self init];
     rangeCount = 1;
     singleRange = range;
@@ -137,10 +137,11 @@ static BOOL nsindexset_containsIndexesInRange(NSIndexSet *indexSet, NSRange rang
 
 - (void)dealloc {
     free(multipleRanges);
+    multipleRanges = NULL;
     [super dealloc];
 }
 
-- (id)initWithIndexSet:(HFIndexSet *)otherSet {
+- (instancetype)initWithIndexSet:(HFIndexSet *)otherSet {
     HFASSERT(otherSet != nil);
     rangeCount = otherSet->rangeCount;
     if (rangeCount == 0) {
@@ -153,7 +154,8 @@ static BOOL nsindexset_containsIndexesInRange(NSIndexSet *indexSet, NSRange rang
     else {
         /* Multiple ranges */
         size_t size = rangeCount * sizeof *multipleRanges;
-        multipleRanges = NSAllocateCollectable(size, 0); //unscanned, collectable
+        if(multipleRanges) free(multipleRanges);
+        multipleRanges = check_malloc(size);
         memcpy(multipleRanges, otherSet->multipleRanges, size);
     }
     return self;
@@ -283,18 +285,19 @@ static BOOL nsindexset_containsIndexesInRange(NSIndexSet *indexSet, NSRange rang
     if (rangeCapacity == newCapacity) return;
     if (rangeCapacity == 0) {
         /* Go multi */
-        multipleRanges = NSAllocateCollectable(newCapacity * sizeof *multipleRanges, 0); //unscanned, collectable
+        if(multipleRanges) free(multipleRanges);
+        multipleRanges = check_malloc(newCapacity * sizeof(*multipleRanges));
         multipleRanges[0] = singleRange;
     }
     else if (newCapacity == 0) {
         /* Go singular */
         if (rangeCount > 0) singleRange = [self rangeAtIndex:0];
-        if (! objc_collectingEnabled()) free(multipleRanges);
+        free(multipleRanges);
         multipleRanges = NULL;
     }
     else {
         /* Reallocate */
-        multipleRanges = NSReallocateCollectable(multipleRanges, newCapacity * sizeof *multipleRanges, 0);
+        multipleRanges = check_realloc(multipleRanges, newCapacity * sizeof(*multipleRanges));
     }
     rangeCapacity = newCapacity;
 }

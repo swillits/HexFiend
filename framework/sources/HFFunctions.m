@@ -1,6 +1,8 @@
 #import <HexFiend/HFFunctions.h>
 #import <HexFiend/HFController.h>
 
+#import "HFFunctions_Private.h"
+
 #ifndef NDEBUG
 //#define USE_CHUD 1
 #endif
@@ -30,7 +32,6 @@ NSImage *HFImageNamed(NSString *name) {
             }
             else {
                 [image setName:name];
-                [image setScalesWhenResized:YES];
             }
         }
     }
@@ -89,7 +90,7 @@ static int hfrange_compare(const void *ap, const void *bp) {
 + (NSArray *)organizeAndMergeRanges:(NSArray *)inputRanges {
     HFASSERT(inputRanges != NULL);
     NSUInteger leading = 0, trailing = 0, length = [inputRanges count];
-    if (length == 0) return [NSArray array];
+    if (length == 0) return @[];
     else if (length == 1) return [NSArray arrayWithArray:inputRanges];
     
     NEW_ARRAY(HFRange, ranges, length);
@@ -242,7 +243,7 @@ static BOOL HFRangeSetOverlapsAnyRange(CFMutableArrayRef array, uintptr_t a, uin
     }
 }
 
-- (id)init {
+- (instancetype)init {
     if(!(self = [super init])) return nil;
     array = CFArrayCreateMutable(kCFAllocatorDefault, 0, NULL);
     return self;
@@ -553,7 +554,7 @@ static BOOL HFRangeSetOverlapsAnyRange(CFMutableArrayRef array, uintptr_t a, uin
     [aCoder encodeBytes:values length:count * sizeof(*values)];
 }
 
-- (id)initWithCoder:(NSCoder *)aDecoder {
+- (instancetype)initWithCoder:(NSCoder *)aDecoder {
     if(!(self = [super init])) return nil;
     
     NSUInteger count;

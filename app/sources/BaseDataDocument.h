@@ -53,6 +53,8 @@ NSString * const BaseDataDocumentDidChangeStringEncodingNotification;
     BOOL shouldLiveReload;
     NSDate *liveReloadDate;
     NSTimer *liveReloadTimer;
+    
+    NSUInteger cleanGenerationCount;
 }
 
 - (void)moveSelectionForwards:(NSMenuItem *)sender;
@@ -61,8 +63,8 @@ NSString * const BaseDataDocumentDidChangeStringEncodingNotification;
 
 - (IBAction)moveSelectionByAction:(id)sender;
 
+@property (nonatomic, copy) NSFont *font;
 - (void)setFont:(NSFont *)font registeringUndo:(BOOL)undo;
-- (NSFont *)font;
 
 - (IBAction)increaseFontSize:(id)sender;
 - (IBAction)decreaseFontSize:(id)sender;
@@ -100,20 +102,17 @@ NSString * const BaseDataDocumentDidChangeStringEncodingNotification;
 - (void)hideBannerFirstThenDo:(SEL)command;
 - (NSArray *)runningOperationViews;
 
-- (NSStringEncoding)stringEncoding;
-- (void)setStringEncoding:(NSStringEncoding)encoding;
+@property (nonatomic) NSStringEncoding stringEncoding;
 - (IBAction)setStringEncodingFromMenuItem:(NSMenuItem *)item;
 
-- (BOOL)isTransient;
-- (void)setTransient:(BOOL)flag;
+@property (nonatomic, getter=isTransient) BOOL transient;
 
 /* Returns a string identifier used as an NSUserDefault prefix for storing the layout for documents of this type.  If you return nil, the layout will not be stored.  The default is to return the class name. */
 + (NSString *)layoutUserDefaultIdentifier;
 
 - (BOOL)requiresOverwriteMode;
 
-- (BOOL)shouldLiveReload;
-- (void)setShouldLiveReload:(BOOL)flag;
+@property (nonatomic) BOOL shouldLiveReload;
 - (IBAction)setLiveReloadFromMenuItem:sender;
 
 @end
